@@ -9,6 +9,7 @@ import DetailHeart from './Component/detailHeart';
 import Intro from './Component/intro';
 import RegisterPet from './Component/registerPet';
 import PetLists from './Component/petLists';
+import ConnectBle from './Component/connectBle';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,7 +17,7 @@ const App = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Intro"
+        initialRouteName="PetLists"
         screenOptions={{
           headerShown: false,
           contentStyle: {
@@ -32,6 +33,7 @@ const App = () => {
         <Stack.Screen name="DetailHeart" component={DetailHeart} />
         <Stack.Screen name="RegisterPet" component={RegisterPet} />
         <Stack.Screen name="PetLists" component={PetLists} />
+        <Stack.Screen name="ConnectBle" component={ConnectBle} />
       </Stack.Navigator>
     </NavigationContainer>
   );

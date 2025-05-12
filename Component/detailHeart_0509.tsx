@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
+import Header from './header';
 
 type IRDataPoint = {
   timestamp: number;
   value: number;
 };
 
-const DetailHeart = ({ hrData }: { hrData: number }) => {
+const DetailHeart = ({ route }: { route?: any }) => {
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -69,63 +70,66 @@ const DetailHeart = ({ hrData }: { hrData: number }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.chart_container}>
-        <View style={styles.chart_wrapper}>
-          {/* Y축 레이블 */}
-          <View style={styles.yAxis}>
-            {yLabels.map((label, index) => (
-              <Text key={index} style={styles.yAxisLabel}>
-                {label}
-              </Text>
-            ))}
+    <>
+      <Header title="심박수 상세" />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.chart_container}>
+          <View style={styles.chart_wrapper}>
+            {/* Y축 레이블 */}
+            <View style={styles.yAxis}>
+              {yLabels.map((label, index) => (
+                <Text key={index} style={styles.yAxisLabel}>
+                  {label}
+                </Text>
+              ))}
+            </View>
+            
+            {/* 그래프 영역 */}
+            <ScrollView 
+              ref={scrollViewRef}
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.graphContainer}
+            >
+              <Svg width={chartWidth} height={chartHeight}>
+                {/* 그리드 라인 */}
+                {yLabels.map((_, index) => (
+                  <Line
+                    key={index}
+                    x1={padding}
+                    y1={padding + (graphHeight * index) / 4}
+                    x2={chartWidth - padding}
+                    y2={padding + (graphHeight * index) / 4}
+                    stroke="#E0E0E0"
+                    strokeWidth="1"
+                  />
+                ))}
+                
+                {/* 데이터 라인 */}
+                {data.length > 0 && (
+                  <Path
+                    d={createPath()}
+                    stroke="#F5B75C"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                )}
+              </Svg>
+            </ScrollView>
           </View>
           
-          {/* 그래프 영역 */}
-          <ScrollView 
-            ref={scrollViewRef}
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.graphContainer}
+          {/* 자동 스크롤 제어 버튼 */}
+          <TouchableOpacity 
+            style={styles.playButton} 
+            onPress={() => setIsAutoScrolling(!isAutoScrolling)}
           >
-            <Svg width={chartWidth} height={chartHeight}>
-              {/* 그리드 라인 */}
-              {yLabels.map((_, index) => (
-                <Line
-                  key={index}
-                  x1={padding}
-                  y1={padding + (graphHeight * index) / 4}
-                  x2={chartWidth - padding}
-                  y2={padding + (graphHeight * index) / 4}
-                  stroke="#E0E0E0"
-                  strokeWidth="1"
-                />
-              ))}
-              
-              {/* 데이터 라인 */}
-              {data.length > 0 && (
-                <Path
-                  d={createPath()}
-                  stroke="#F5B75C"
-                  strokeWidth="2"
-                  fill="none"
-                />
-              )}
-            </Svg>
-          </ScrollView>
+            <Text style={styles.playButtonText}>
+              {isAutoScrolling ? '정지' : '재생'}
+            </Text>
+          </TouchableOpacity>
         </View>
-        
-        {/* 자동 스크롤 제어 버튼 */}
-        <TouchableOpacity 
-          style={styles.playButton} 
-          onPress={() => setIsAutoScrolling(!isAutoScrolling)}
-        >
-          <Text style={styles.playButtonText}>
-            {isAutoScrolling ? '정지' : '재생'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -135,11 +139,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   chart_container: {
-    paddingHorizontal: 0, 
-    paddingVertical: 16, 
+    paddingHorizontal: 0, // 좌우 패딩 제거
+    paddingVertical: 16, // 상하 패딩 유지
     backgroundColor: '#ffffff',
     borderRadius: 0,
-    marginHorizontal: 0, 
+    marginHorizontal: 0, // 좌우 마진 제거
     marginVertical: 16, // 상하 마진 유지
     shadowColor: '#000',
     shadowOffset: {

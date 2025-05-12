@@ -1,0 +1,106 @@
+import React from "react";
+import {SafeAreaView, StyleSheet, Text, View, Image} from "react-native";
+
+interface Data {
+  hrData : number;
+  spo2Data : number;
+  tempData : number;
+}
+
+interface DashboardDataProps {
+  screen: string;
+  data: Data;
+}
+const DashboardData = ({screen, data}: DashboardDataProps ) => {
+  return (
+        <SafeAreaView style={styles.container}>
+          <SafeAreaView style={styles.metrics_container}>
+            <SafeAreaView style={styles.metric_box}>
+              <Image source={require("../assets/images/icon_hr.png")} style={styles.icon_img}/>
+              {screen === 'LANDSCAPE' && <Text style={styles.icon_text}>심박수</Text>}
+              <View style={styles.value_box}>
+                {/* <Text style={styles.value}>{data.hrData}</Text> */}
+                <Text style={styles.value}>120</Text>
+                <Text style={styles.unit}>BPM</Text>
+              </View>
+            </SafeAreaView>
+            <SafeAreaView style={styles.metric_box}>
+              <Image source={require("../assets/images/icon_spo2.png")} style={styles.icon_img}/>
+              {screen === 'LANDSCAPE' && <Text style={styles.icon_text}>산소포화도</Text>}
+              <View style={styles.value_box}>
+                {/* <Text style={styles.value}>{data.spo2Data}</Text> */}
+                <Text style={styles.value}>97</Text>
+                <Text style={styles.unit}>%</Text>
+              </View>
+            </SafeAreaView>
+            <SafeAreaView style={styles.metric_box}>
+              <Image source={require("../assets/images/icon_temp.png")} style={styles.icon_img}/>
+              {screen === 'LANDSCAPE' && <Text style={styles.icon_text}>체온</Text>}
+              <View style={styles.value_box}>
+                {/* <Text style={styles.value}>{data.tempData}</Text> */}
+                <Text style={styles.value}>36.5</Text>
+                <Text style={styles.unit}>°C</Text>
+              </View>
+            </SafeAreaView>
+          </SafeAreaView>
+        </SafeAreaView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    height: 'auto',
+    borderWidth: 1,
+    borderRadius: 16,
+    borderColor: '#F5B75C',
+    paddingTop: 12,
+    paddingBottom: 12,
+    marginTop: 20,
+  },
+  metrics_container: {
+    width: "100%",
+    height: 'auto',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 4,
+    paddingRight: 4,
+  },
+  metric_box: {
+    width: '28%',
+    height: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  icon_img: {
+    width: 24,
+    height: 24,
+    marginRight: 4,
+  },
+  icon_text: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  value_box: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  value: {
+    fontSize: 28,
+    fontWeight: '400',
+    color: '#262626',
+    lineHeight: 28,
+    textAlign: 'right',
+  },
+  unit: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#7b7b7b',
+    marginLeft: 4,
+  },
+})
+
+export default DashboardData;

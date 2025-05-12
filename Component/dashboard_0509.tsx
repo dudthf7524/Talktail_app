@@ -18,7 +18,6 @@ import {
   Image,
   ScrollView,
   Alert,
-  ScaledSize,
 } from 'react-native';
 import axios from 'axios';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
@@ -27,11 +26,6 @@ import {Buffer} from 'buffer';
 import dayjs from 'dayjs';
 import Header from "./header"
 import NavigationBar from './navigationBar';
-import DetailHeart from './detailHeart';
-import DetailTemp from './detailTemp';
-import DashboardInfo from './dashboardInfo';
-import DashboardChart from './dashboardChart';
-import DashboardData from './dashboardData';
 
 type RootStackParamList = {
   Dashboard: {
@@ -147,11 +141,6 @@ const Dashboard = () => {
   const [spo2Data, setSpo2Data] = useState(0);
   const [tempData, setTempData] = useState(0);
 
-  const [orientation, setOrientation] = useState('PORTRAIT');
-
-  const [showControls, setShowControls] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-
   // <HomeComponent bleData={rawDatas} />;
 
   peripherals.get;
@@ -209,40 +198,29 @@ const Dashboard = () => {
     // setRawDatas(0);
   };
   const [currentTime, setCurrentTime] = useState('');
-  // const formatDateTime = (date: Date): string => {
-  //   const updatedDate = new Date(date);
-  //   const options = {
-  //     year: 'numeric',
-  //     month: '2-digit',
-  //     day: '2-digit',
-  //     hour: '2-digit',
-  //     minute: '2-digit',
-  //     second: '2-digit',
-  //     hour12: false,
-  //   };
+  const formatDateTime = (date: Date): string => {
+    const updatedDate = new Date(date);
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    };
 
-  //   return updatedDate.toLocaleString('ko-KR', options);
-  // };
-  // const checkCurrentTime = () => {
-  //   const formattedTime = formatDateTime(new Date());
-  //   return formattedTime;
-  // };
+    return updatedDate.toLocaleString('ko-KR', options);
+  };
+  const checkCurrentTime = () => {
+    const formattedTime = formatDateTime(new Date());
+    return formattedTime;
+  };
   const [dataStorage, setDataStorage] = useState<
     {time: string; ir: number; red: number}[]
   >([]);
 
-  // sendDatas 상태 타입 정의 및 초기화 주석 처리
-  // interface SensorData {
-  //   red: number | null;
-  //   ir: number | null;
-  //   SpO2: number | null;
-  //   HR: number | null;
-  //   TEMP: number | null;
-  //   time: string | null;
-  // }
-
-  // const [sendDatas, setSendDatas] = useState<SensorData[]>([]);
-
+  const [sendDatas, setSendDatas] = useState([]);
   const parseData = (
     input: string,
   ): {
@@ -293,93 +271,124 @@ const Dashboard = () => {
         setTempData(data.TEMP);
       }
 
-      // sendDatas 상태 타입 정의 및 초기화 주석 처리
-      // setSendDatas(prevData => [
-      //   ...prevData,
-      //   {
-      //     red: data.red,
-      //     ir: data.ir,
-      //     SpO2: data.SpO2,
-      //     HR: data.HR,
-      //     TEMP: data.TEMP,
-      //     time: data.time,
-      //   },
-      // ]);
+      setSendDatas(prevData => [
+        ...prevData,
+        {
+          red: data.red,
+          ir: data.ir,
+          SpO2: data.SpO2,
+          HR: data.HR,
+          TEMP: data.TEMP,
+          time: data.time,
+        },
+      ]);
     }
 
     return data;
   };
 
-  // const sendArray = async () => {
-  //   try {
-  //     // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
+  const sendArray = async () => {
+    try {
+      // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
 
-  //     const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
+      const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
 
-  //     // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
+      // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
 
-  //     // const apiUrl = 'http://localhost:3000/receive/arrs';
-  //     // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
-  //     // const apiUrl = 'http://localhost:3000/receive/arrs';
-  //     // console.log('sended dataLists : ', dataLists);
-  //     const response = await axios.post(apiUrl, sendDatas);
-  //     if (response.status === 200) {
-  //       Alert.alert('Success Message', 'send datas');
-  //       setSendDatas([]);
-  //     }
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // };
-  // BLE 데이터 처리 부분 주석 처리
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // console.log('sended dataLists : ', dataLists);
+      const response = await axios.post(apiUrl, sendDatas);
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send datas');
+        setSendDatas([]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const handleUpdateValueForCharacteristic = (
     data: BleManagerDidUpdateValueForCharacteristicEvent,
   ) => {
-    // try {
-    //   const {value} = data;
-    //   if (!value) return;
+    const {value} = data;
 
-    //   // Base64 문자열로 변환
-    //   const base64String = Array.from(value)
-    //     .map(byte => String.fromCharCode(byte))
-    //     .join('');
-      
-    //   const decodedValue = Buffer.from(base64String, 'base64').toString('utf-8');
-    //   const parsedData = parseData(decodedValue);
-    //   console.log('Parsed Data: ', parsedData);
-    // } catch (error) {
-    //   console.error('Error processing BLE data:', error);
-    // }
+    // Base64로 인코딩된 값을 디코딩
+    const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+
+    // console.log('value : ', decodedValue);
+    const parsedData = parseData(decodedValue);
+    console.log('Parsed Data: ', parsedData);
+
+    // console.log('AAAA');
+    // const {value, characteristic} = data;
+    // console.log('value : ', value);
+    // console.log('characteristic : ', characteristic);
+
+    // const decodedData = Buffer.from(value, 'base64').toString();
+
+    // console.log(`Received data from characteristic ${characteristic}:`, decodedData);
+    // console.log('수신된 원시 데이터 : ', value);
+    // const asciiResult: string = convertToAscii2(data.value);
+    // console.log('asciiResult : ', asciiResult); // 변환된 ASCII 데이터 로그
+    // const parsedData = parseData(asciiResult);
+    // console.log('파싱된 데이터:', parsedData);
+    // console.log('data.value : ', data.value);
+    // const asciiResult: string = convertToAscii(data.value);
+    // console.log('asciiResult : ', asciiResult);
+    // const parts = asciiResult.split(', ');
+    // const irValue = parts[0].split(': ')[1];
+    // const redValue = parts[1].split(': ')[1];
+    // const tempValue = parts[2] && parts[2].split(': ')[1];
+    // const irNumber = parseInt(irValue);
+    // const redNumber = parseInt(redValue);
+    // const tempNumber = parseInt(tempValue);
+
+    // console.log('irNumber : ', irNumber);
+    // console.log('redNumber : ', redNumber);
+    // console.log('tempNumber : ', tempNumber);
+    // setIr(irNumber);
+    // setRed(redNumber);
+    // setTemp(tempNumber);
+    // setDataStorage(prevData => [
+    //   ...prevData,
+    //   {
+    //     time: checkCurrentTime().toLocaleString(),
+    //     ir: irNumber,
+    //     red: redNumber,
+    //     temp: tempNumber,
+    //   },
+    // ]);
   };
-  // const sendObject = async () => {
-  //   // const apiUrl = 'http://10.0.2.2:8001/object';
-  //   // const apiUrl = 'http://localhost:8001/object';
-  //   // const apiUrl = 'http://27.96.128.206:8001/object';
-  //   const apiUrl = 'http://115.85.183.166:8001/objectRaw';
-  //   try {
-  //     const response = await axios.post(apiUrl, dataStorage);
-  //     console.log('Data sent successfully');
-  //     if (response.status === 200) {
-  //       Alert.alert('Success Message', 'send success');
-  //       setDataStorage([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error sending data:', error);
-  //     if (error.response) {
-  //       // 서버로부터 응답을 받았으나, 응답 코드가 2xx가 아닌 경우
-  //       Alert.alert(
-  //         'Error',
-  //         `Server responded with status ${error.response.status}`,
-  //       );
-  //     } else if (error.request) {
-  //       // 요청을 보냈지만 응답을 받지 못한 경우
-  //       Alert.alert('Error', 'No response received from the server');
-  //     } else {
-  //       // 오류를 발생시킨 요청 자체에 문제가 있는 경우
-  //       Alert.alert('Error', 'Request failed:', error.message);
-  //     }
-  //   }
-  // };
+  const sendObject = async () => {
+    // const apiUrl = 'http://10.0.2.2:8001/object';
+    // const apiUrl = 'http://localhost:8001/object';
+    // const apiUrl = 'http://27.96.128.206:8001/object';
+    const apiUrl = 'http://115.85.183.166:8001/objectRaw';
+    try {
+      const response = await axios.post(apiUrl, dataStorage);
+      console.log('Data sent successfully');
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send success');
+        setDataStorage([]);
+      }
+    } catch (error) {
+      console.error('Error sending data:', error);
+      if (error.response) {
+        // 서버로부터 응답을 받았으나, 응답 코드가 2xx가 아닌 경우
+        Alert.alert(
+          'Error',
+          `Server responded with status ${error.response.status}`,
+        );
+      } else if (error.request) {
+        // 요청을 보냈지만 응답을 받지 못한 경우
+        Alert.alert('Error', 'No response received from the server');
+      } else {
+        // 오류를 발생시킨 요청 자체에 문제가 있는 경우
+        Alert.alert('Error', 'Request failed:', error.message);
+      }
+    }
+  };
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
     // if (peripheral.name === targetDeviceName) {
@@ -624,15 +633,19 @@ const Dashboard = () => {
               source={require('../assets/images/device_icon.png')}
               style={styles.icon}
             />
-            <Text style={styles.peripheral_name}>{item.id}</Text>
-            {/* <Image
+            {/* <Text style={styles.peripheralName}>{targetDeviceName}</Text> */}
+            <Text style={styles.peripheralName}>{item.id}</Text>
+            <Image
               source={
-                ir === 0
+                ir === ''
                   ? require('../assets/images/connecting_img1.png')
                   : require('../assets/images/connecting_img2.png')
               }
               style={styles.connecting}
-            /> */}
+            />
+            {/* <Text style={styles.state}>
+    {rawDatas === '' ? '연결 안 됨' : '연결됨'}
+  </Text> */}
           </View>
         </TouchableHighlight>
       );
@@ -678,52 +691,76 @@ const Dashboard = () => {
   };
   // const {data} = route ? route.params : null;
 
-  // const handleConnectBle = () => {
-  //   navigation.navigate('ConnectBle');
-  // };
-
-  useEffect(() => {
-    const { width, height } = Dimensions.get('window');
-    setOrientation(width < height ? 'PORTRAIT' : 'LANDSCAPE');
-
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setOrientation(window.width < window.height ? 'PORTRAIT' : 'LANDSCAPE');
-    });
-
-    return () => subscription.remove();
-  }, []);
-
-  const handleChartTouch = () => {
-    if (orientation === 'LANDSCAPE') {
-      setShowControls(true);
-      // 3초 후에 컨트롤을 다시 숨김
-      setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
+  const handleConnectBle = () => {
+    navigation.navigate('ConnectBle');
   };
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    // 여기에 실제 재생/정지 로직 구현
-    console.log(isPlaying ? 'Pausing...' : 'Playing...');
-  };
   return (
     <>
-    {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
-
-    <ScrollView style={styles.container}>
-      <DashboardInfo screen={orientation} pet={selectedPet}/>
-      <DashboardChart screen={orientation}/>
-      <DashboardData screen={orientation} data={{
-        hrData : hrData,
-        spo2Data : spo2Data,
-        tempData : tempData,  
-      }}/>
-   
-    </ScrollView>
-    {orientation === 'PORTRAIT' && <NavigationBar />}
- 
+      <Header title="디바이스 모니터링" />
+      <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.info_container}>
+          <Text style={styles.info_name}>{selectedPet.name}</Text>
+          <SafeAreaView style={styles.info_box}>
+            <Image source={require("../assets/images/gender_female.png")} style={styles.icon_gender}/>
+            <Text style={styles.info_age}>{selectedPet.birthDate}</Text>
+            <Text style={styles.info_age}>|</Text>
+            <Text style={styles.info_age}>{selectedPet.breed}</Text>
+          </SafeAreaView>
+        </SafeAreaView>
+        <SafeAreaView style={styles.ble_box}>
+          <Text style={styles.ble_status}>디바이스 미연결됨</Text>
+          <Image source={require("../assets/images/ble_off.png")} style={styles.ble_icon}/>
+        </SafeAreaView>
+        <SafeAreaView style={styles.article_container}>
+          <SafeAreaView style={styles.basic_info}>
+            <Image source={require("../assets/images/icon_basic.png")} style={styles.basic_icon}/>
+            <Text style={styles.basic_text}>기본정보</Text>
+          </SafeAreaView>
+          <SafeAreaView style={styles.article_box}>
+            <SafeAreaView style={styles.icon_box}>
+              <Image source={require("../assets/images/icon_hr.png")} style={styles.icon_img}/>
+              <Text style={styles.icon_text}>심박수</Text>
+            </SafeAreaView>
+            <SafeAreaView style={styles.value_box}>
+              <Text style={styles.value}>{hrData}</Text>
+              <Text style={styles.unit}>BPM</Text>
+            </SafeAreaView>
+            <Pressable onPress={() => navigation.navigate('DetailHeart', { hrData })}>
+              <Text style={styles.detail}>더 보기 {">"}</Text>
+            </Pressable>
+          </SafeAreaView>
+          <SafeAreaView style={styles.box_line}/>
+          <SafeAreaView style={styles.article_box}>
+            <SafeAreaView style={styles.icon_box}>
+              <Image source={require("../assets/images/icon_spo2.png")} style={styles.icon_img}/>
+              <Text style={styles.icon_text}>산소포화도</Text>
+            </SafeAreaView>
+            <SafeAreaView style={styles.value_box}>
+              <Text style={styles.value}>{spo2Data}</Text>
+              <Text style={styles.unit}>%</Text>
+            </SafeAreaView>
+            <Pressable >
+              <Text style={styles.detail}></Text>
+            </Pressable>
+          </SafeAreaView>
+          <SafeAreaView style={styles.box_line}/>
+          <SafeAreaView style={styles.article_box}>
+            <SafeAreaView style={styles.icon_box}>
+              <Image source={require("../assets/images/icon_temp.png")} style={styles.icon_img}/>
+              <Text style={styles.icon_text}>체온</Text>
+            </SafeAreaView>
+            <SafeAreaView style={styles.value_box}>
+              <Text style={styles.value}>{tempData}</Text>
+              <Text style={styles.unit}>°C</Text>
+            </SafeAreaView>
+            <Pressable onPress={() => navigation.navigate('DetailTemp', { tempData })}>
+            <Text style={styles.detail}>더 보기 {">"}</Text>
+            </Pressable>
+          </SafeAreaView>
+        </SafeAreaView>
+      </SafeAreaView>
+      <NavigationBar />
     </>
   );
 };
@@ -732,6 +769,40 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: 'auto',
+    display: 'flex',
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: "#ffffff",
+  },
+  info_container: {
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  info_name: {
+    fontSize: 32,
+    fontWeight: '400',
+    color: '#262626',
+  },
+  info_box: {
+    width: '100%',
+    height: 26,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  icon_gender: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  info_age: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#7b7b7b',
+    marginRight: 8,
   },
   ble_box: {
     width: '100%',
@@ -751,7 +822,18 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
   },
-
+  article_container: {
+    width: '100%',
+    height: 'auto',
+    borderWidth: 1,
+    borderRadius: 16,
+    borderColor: '#F5B75C',
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 24,
+    paddingRight: 24,
+    marginTop: 12,
+  },
   basic_info: {
     width: '100%',
     height: 'auto',
@@ -787,7 +869,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
+  icon_img: {
+    width: 24,
+    height: 24,
+    marginRight: 4,
+  },
+  icon_text: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  value_box : {
+    width: 90,
+    height: 'auto',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{translateX: -30}, {translateY: -12}],
+  
+  },
+  value: {
+    width: 50,
+    fontSize: 28,
+    fontWeight: '400',
+    color: '#262626',
+    lineHeight: 28,
+    textAlign: 'right',
+    margin: 0,
+  },
+  unit: {
+    width: 30,
+    height: 20,
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#7b7b7b',
+    margin: 0,
+  },
   detail: {
     fontSize: 12,
     fontWeight: '400',
@@ -798,7 +918,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 1,
     backgroundColor: '#F5B75C',
-  },
+  }, 
   title: {
     width: '100%',
     marginTop: 40,
@@ -830,8 +950,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
   },
+  // -------------------------------------
   btn_box: {
     paddingTop: 13,
+    // backgroundColor: 'white',
   },
   back_btn: {
     fontSize: 12,
@@ -840,10 +962,12 @@ const styles = StyleSheet.create({
     marginLeft: 31,
   },
   body: {
+    // backgroundColor: 'white',
     alignItems: 'center',
   },
-  scan_button: {
+  scanButton: {
     width: 207,
+    // width: '100%',
     height: 41,
     alignItems: 'center',
     justifyContent: 'center',
@@ -858,7 +982,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  scan_button_text: {
+  scanButtonText: {
     fontSize: 20,
     color: 'white',
   },
@@ -874,6 +998,7 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     marginBottom: 0,
   },
+
   row: {
     width: windowWidth * 0.8,
     height: 47,
@@ -882,6 +1007,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 4,
     paddingRight: 14,
+    // elevation: 2,
+    // backgroundColor: 'gray',
+    // borderRadius: 6,
+    // shadowColor: '#000000',
+    // shadowOffset: {width: 1, height: 1},
+    // shadowOpacity: 0.8,
+    // shadowRadius: 8,
+    // opacity: 0.25,
   },
   touch_box: {
     height: 47,
@@ -892,7 +1025,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
   },
-  peripheral_name: {
+  peripheralName: {
     width: windowWidth * 0.55,
     marginLeft: 5,
     fontSize: 16,
@@ -906,50 +1039,17 @@ const styles = StyleSheet.create({
   state: {
     fontSize: 16,
     fontWeight: 'bold',
+    // color: '#ADADAD',
     color: 'white',
   },
-  input_text: {
+  inputText: {
     width: '70%',
     height: 41,
     marginTop: 22,
     borderWidth: 1,
     borderColor: '#12B6D1',
     paddingLeft: 20,
-  },
-  chart_container: {
-    width: '100%',
-    height: 300,
-    marginVertical: 20,
-  },
-
-
-  split_chart_container: {
-    flexDirection: 'row',
-    width: '100%',
-    height: '100%',
-  },
-  half_chart: {
-    flex: 1,
-    height: '100%',
-  },
-  play_pause_button: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  play_pause_button_text: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
+    // textAlign: 'center',
   },
 });
 export default Dashboard;

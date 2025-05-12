@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import Svg, { Path, Line, Text as SvgText } from 'react-native-svg';
 import { tempDataLists, DataPoint } from './tempDummyDatas';
+import Header from './header';
 
-const DetailTemp = ({ tempData }: { tempData: number }) => {
+const DetailTemp = ({ route }: { route: any }) => {
+  const { tempData } = route.params;
   const [data, setData] = useState<DataPoint[]>(tempDataLists);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -83,94 +85,97 @@ const DetailTemp = ({ tempData }: { tempData: number }) => {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.chart_container}>
-        <View style={styles.chart_wrapper}>
-          {/* Y축 레이블 */}
-          <View style={styles.yAxis}>
-            {yLabels.map((label, index) => (
-              <Text key={index} style={styles.yAxisLabel}>
-                {label}
-              </Text>
-            ))}
+    <>
+      <Header title="체온 상세" />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.chart_container}>
+          <View style={styles.chart_wrapper}>
+            {/* Y축 레이블 */}
+            <View style={styles.yAxis}>
+              {yLabels.map((label, index) => (
+                <Text key={index} style={styles.yAxisLabel}>
+                  {label}
+                </Text>
+              ))}
+            </View>
+            
+            {/* 그래프 영역 */}
+            <ScrollView 
+              ref={scrollViewRef}
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.graphContainer}
+            >
+              <Svg width={chartWidth} height={chartHeight}>
+                {/* 그리드 라인 */}
+                {yLabels.map((_, index) => (
+                  <Line
+                    key={index}
+                    x1={padding}
+                    y1={padding + (graphHeight * index) / 5}
+                    x2={chartWidth - padding}
+                    y2={padding + (graphHeight * index) / 5}
+                    stroke="#E0E0E0"
+                    strokeWidth="1"
+                  />
+                ))}
+                
+                {/* 데이터 라인 */}
+                <Path
+                  d={createPath()}
+                  stroke="#F5B75C"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                
+                {/* 데이터 포인트 */}
+                {data.map((item, index) => {
+                  const value = Object.values(item)[0];
+                  const x = (index / (data.length - 1)) * (chartWidth - padding * 2) + padding;
+                  const y = chartHeight - padding - ((value - minValue) / valueRange) * graphHeight;
+                  return (
+                    <View key={index}>
+                      <View
+                        style={[
+                          styles.dataPoint,
+                          {
+                            left: x - 6,
+                            top: y - 6,
+                          },
+                        ]}
+                      />
+                      {/* X축 레이블 */}
+                      <Text
+                        style={[
+                          styles.xAxisLabel,
+                          {
+                            position: 'absolute',
+                            left: x - 20,
+                            top: chartHeight - 20,
+                          },
+                        ]}
+                      >
+                        {Object.keys(item)[0].split('-')[1].substring(2, 6).replace(/(\d{2})(\d{2})/, '$1:$2')}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </Svg>
+            </ScrollView>
           </View>
           
-          {/* 그래프 영역 */}
-          <ScrollView 
-            ref={scrollViewRef}
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.graphContainer}
+          {/* 자동 스크롤 제어 버튼 */}
+          <TouchableOpacity 
+            style={styles.playButton} 
+            onPress={() => setIsAutoScrolling(!isAutoScrolling)}
           >
-            <Svg width={chartWidth} height={chartHeight}>
-              {/* 그리드 라인 */}
-              {yLabels.map((_, index) => (
-                <Line
-                  key={index}
-                  x1={padding}
-                  y1={padding + (graphHeight * index) / 5}
-                  x2={chartWidth - padding}
-                  y2={padding + (graphHeight * index) / 5}
-                  stroke="#E0E0E0"
-                  strokeWidth="1"
-                />
-              ))}
-              
-              {/* 데이터 라인 */}
-              <Path
-                d={createPath()}
-                stroke="#F5B75C"
-                strokeWidth="2"
-                fill="none"
-              />
-              
-              {/* 데이터 포인트 */}
-              {data.map((item, index) => {
-                const value = Object.values(item)[0];
-                const x = (index / (data.length - 1)) * (chartWidth - padding * 2) + padding;
-                const y = chartHeight - padding - ((value - minValue) / valueRange) * graphHeight;
-                return (
-                  <View key={index}>
-                    <View
-                      style={[
-                        styles.dataPoint,
-                        {
-                          left: x - 6,
-                          top: y - 6,
-                        },
-                      ]}
-                    />
-                    {/* X축 레이블 */}
-                    <Text
-                      style={[
-                        styles.xAxisLabel,
-                        {
-                          position: 'absolute',
-                          left: x - 20,
-                          top: chartHeight - 20,
-                        },
-                      ]}
-                    >
-                      {Object.keys(item)[0].split('-')[1].substring(2, 6).replace(/(\d{2})(\d{2})/, '$1:$2')}
-                    </Text>
-                  </View>
-                );
-              })}
-            </Svg>
-          </ScrollView>
+            <Text style={styles.playButtonText}>
+              {isAutoScrolling ? '정지' : '재생'}
+            </Text>
+          </TouchableOpacity>
         </View>
-        
-        {/* 자동 스크롤 제어 버튼 */}
-        <TouchableOpacity 
-          style={styles.playButton} 
-          onPress={() => setIsAutoScrolling(!isAutoScrolling)}
-        >
-          <Text style={styles.playButtonText}>
-            {isAutoScrolling ? '정지' : '재생'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -180,12 +185,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   chart_container: {
-    paddingHorizontal: 0,
-    paddingVertical: 16,
+    padding: 16,
     backgroundColor: '#ffffff',
-    borderRadius: 0,
-    marginHorizontal: 0,
-    marginVertical: 16,
+    borderRadius: 16,
+    margin: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -208,7 +211,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#262626',
     textAlign: 'right',
-    paddingRight: 5,
   },
   graphContainer: {
     flex: 1,

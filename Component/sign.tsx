@@ -166,7 +166,7 @@ const SignUp = () => {
     <>
       <Header title="회원가입" />
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
+        <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >

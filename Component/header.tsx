@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image,SafeAreaView } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const navigation = useNavigation<NavigationProp<any>>();
 
   return (
+    <SafeAreaView>
     <View style={styles.header}>
       <TouchableOpacity 
         style={styles.backButton}
@@ -22,6 +23,8 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text> 
     </View>
+    </SafeAreaView>
+
   );
 };
 

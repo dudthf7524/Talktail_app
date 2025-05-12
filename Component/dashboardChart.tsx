@@ -17,12 +17,6 @@ const DashboardChart = ({screen} : {screen: string}) => {
         >
           <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>heart</Text>
         </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.view_button, selectedView === 'both' && styles.selected_button]}
-            onPress={() => setSelectedView('both')}
-          >
-            <Text style={[styles.button_text, selectedView === 'both' && styles.selected_button_text]}>both</Text>
-          </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
           onPress={() => setSelectedView('temp')}
@@ -98,8 +92,6 @@ const styles = StyleSheet.create({
   landscape_container : {
     width: "100%",
     height: "auto",
-    borderWidth: 1,
-    borderColor: "red",
   },
   btn_container: {
     width: 166,

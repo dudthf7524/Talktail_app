@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   playButton: {
     backgroundColor: '#F5B75C',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 4,
     borderRadius: 20,
     alignSelf: 'center',
     marginTop: 16,

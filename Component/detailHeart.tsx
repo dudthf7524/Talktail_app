@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 0,
     marginHorizontal: 0, 
-    marginVertical: 16, // 상하 마진 유지
+    marginVertical: 4, // 상하 마진 유지
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   playButton: {
     backgroundColor: '#F5B75C',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 4,
     borderRadius: 20,
     alignSelf: 'center',
     marginTop: 16,

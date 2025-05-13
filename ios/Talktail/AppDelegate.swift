@@ -31,6 +31,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     return true
   }
+
+  
+  // ✅ 화면 회전 허용 설정 함수 추가
+  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+    // 허용할 방향들 설정
+    return [.portrait, .landscapeLeft, .landscapeRight]
+  }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {

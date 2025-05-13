@@ -12,15 +12,19 @@ import {
   Platform,
 } from 'react-native';
 import Header from './header';
+import AlertModal from '../Component/modal/alertModal';
+import axios from 'axios';
+import { API_URL } from './constant/contants';
 
 type FormData = {
-  hospitalName: string;
-  address: string;
-  id: string;
-  password: string;
+  deviceCode: string;
+  org_name: string;
+  org_address: string;
+  org_id: string;
+  org_pw: string;
   confirmPassword: string;
-  phone: string;
-  email: string;
+  org_phone: string;
+  org_email: string;
 };
 
 type FormErrors = {
@@ -29,17 +33,20 @@ type FormErrors = {
 
 const SignUp = () => {
   const [formData, setFormData] = useState<FormData>({
-    hospitalName: '',
-    address: '',
-    id: '',
-    password: '',
+    deviceCode: '',
+    org_name: '',
+    org_address: '',
+    org_id: '',
+    org_pw: '',
     confirmPassword: '',
-    phone: '',
-    email: '',
+    org_phone: '',
+    org_email: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isIdChecked, setIsIdChecked] = useState(false);
+  const [openAlertModal, setOpenAlertModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', content: '' });
 
   // 전화번호 포맷팅 함수
   const formatPhoneNumber = (text: string) => {
@@ -53,82 +60,92 @@ const SignUp = () => {
 
   // 아이디 중복 체크
   const checkIdDuplication = async () => {
-    if (!formData.id) {
-      setErrors(prev => ({ ...prev, id: '아이디를 입력해주세요.' }));
+    if (!formData.org_id) {
+      setErrors(prev => ({ ...prev, org_id: '아이디를 입력해주세요.' }));
       return;
     }
 
-    if (formData.id.length < 4) {
-      setErrors(prev => ({ ...prev, id: '아이디는 4자 이상이어야 합니다.' }));
+    if (formData.org_id.length < 4) {
+      setErrors(prev => ({ ...prev, org_id: '아이디는 4자 이상이어야 합니다.' }));
       return;
     }
 
     try {
       // TODO: 실제 API 호출로 대체
-      const response = await fetch('YOUR_API_ENDPOINT/check-id', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: formData.id }),
-      });
+      const response = await axios.post(`${API_URL}/user/checkId`, {
+        org_id : formData.org_id})
 
-      const data = await response.json();
-      if (data.isDuplicate) {
-        setErrors(prev => ({ ...prev, id: '이미 사용 중인 아이디입니다.' }));
+      // const data = await response.json();
+      if (response.status === 400) {
+        setErrors(prev => ({ ...prev, org_id: '이미 사용 중인 아이디입니다.' }));
         setIsIdChecked(false);
+        setModalContent({
+          title: '사용 불가',
+          content: '이미 사용 중인 아이디입니다.',
+        });
       } else {
-        setErrors(prev => ({ ...prev, id: undefined }));
+        setErrors(prev => ({ ...prev, org_id: undefined }));
         setIsIdChecked(true);
-        Alert.alert('사용 가능', '사용 가능한 아이디입니다.');
+        setModalContent({
+          title: '사용 가능',
+          content: '사용 가능한 아이디입니다.',
+        });
       }
+      setOpenAlertModal(true);
     } catch (error) {
-      Alert.alert('오류', '아이디 중복 확인 중 오류가 발생했습니다.');
+      setModalContent({
+        title: '오류',
+        content: '아이디 중복 확인 중 오류가 발생했습니다.',
+      });
+      setOpenAlertModal(true);
     }
   };
 
-  // 유효성 검사
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.hospitalName) {
-      newErrors.hospitalName = '병원 이름을 입력해주세요.';
+    if (!formData.deviceCode) {
+      newErrors.deviceCode = '디바이스 코드를 입력해주세요.';
     }
 
-    if (!formData.address) {
-      newErrors.address = '병원 주소를 입력해주세요.';
+    if (!formData.org_name) {
+      newErrors.org_name = '기관 이름을 입력해주세요.';
     }
 
-    if (!formData.id) {
-      newErrors.id = '아이디를 입력해주세요.';
-    } else if (formData.id.length < 4) {
-      newErrors.id = '아이디는 4자 이상이어야 합니다.';
+    if (!formData.org_address) {
+      newErrors.org_address = '기관 주소를 입력해주세요.';
+    }
+
+    if (!formData.org_id) {
+      newErrors.org_id = '아이디를 입력해주세요.';
+    } else if (formData.org_id.length < 4) {
+      newErrors.org_id = '아이디는 4자 이상이어야 합니다.';
     } else if (!isIdChecked) {
-      newErrors.id = '아이디 중복 확인이 필요합니다.';
+      newErrors.org_id = '아이디 중복 확인이 필요합니다.';
     }
 
-    if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
-    } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 8자 이상이어야 합니다.';
+    if (!formData.org_pw) {
+      newErrors.org_pw = '비밀번호를 입력해주세요.';
+    } else if (formData.org_pw.length < 8) {
+      newErrors.org_pw = '비밀번호는 8자 이상이어야 합니다.';
     }
 
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (formData.org_pw !== formData.confirmPassword) {
       newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
     }
 
-    if (!formData.phone) {
-      newErrors.phone = '전화번호를 입력해주세요.';
-    } else if (!/^010-\d{4}-\d{4}$/.test(formData.phone)) {
-      newErrors.phone = '올바른 전화번호 형식이 아닙니다.';
+    if (!formData.org_phone) {
+      newErrors.org_phone = '전화번호를 입력해주세요.';
+    } else if (!/^010-\d{4}-\d{4}$/.test(formData.org_phone)) {
+      newErrors.org_phone = '올바른 전화번호 형식이 아닙니다.';
     }
 
-    if (!formData.email) {
-      newErrors.email = '이메일을 입력해주세요.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식이 아닙니다.';
+    if (!formData.org_email) {
+      newErrors.org_email = '이메일을 입력해주세요.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.org_email)) {
+      newErrors.org_email = '올바른 이메일 형식이 아닙니다.';
     }
 
     setErrors(newErrors);
@@ -137,27 +154,18 @@ const SignUp = () => {
 
   // 회원가입 제출
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    // if (!validateForm()) {
+    //   return;
+    // }
 
     try {
-      // TODO: 실제 API 호출로 대체
-      const response = await fetch('YOUR_API_ENDPOINT/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await axios.post(`${API_URL}/user/signup`, formData);
 
-      if (response.ok) {
-        Alert.alert('성공', '회원가입이 완료되었습니다.');
-        // TODO: 로그인 페이지로 이동
-      } else {
-        Alert.alert('오류', '회원가입 중 오류가 발생했습니다.');
-      }
+      console.log("response : ", response);
+  
+     
     } catch (error) {
+      console.error("error : ", error);
       Alert.alert('오류', '회원가입 중 오류가 발생했습니다.');
     }
   };
@@ -166,41 +174,57 @@ const SignUp = () => {
     <>
       <Header title="회원가입" />
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >
           <ScrollView style={styles.scrollView}>
             <View style={styles.form}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>병원 이름</Text>
+            <View style={styles.inputGroup}>
+                <Text style={styles.label}>디바이스 코드</Text>
                 <TextInput
                   style={styles.input}
-                  value={formData.hospitalName}
+                  value={formData.deviceCode}
                   onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, hospitalName: text }));
-                    setErrors(prev => ({ ...prev, hospitalName: undefined }));
+                    setFormData(prev => ({ ...prev, deviceCode: text }));
+                    setErrors(prev => ({ ...prev, deviceCode: undefined }));
                   }}
-                  placeholder="병원 이름을 입력하세요"
+                  placeholder="상품 포장안에 있는 코드를 입력하세요"
+                  autoCapitalize="characters"
                 />
-                {errors.hospitalName && (
-                  <Text style={styles.errorText}>{errors.hospitalName}</Text>
+                {errors.deviceCode && (
+                  <Text style={styles.errorText}>{errors.deviceCode}</Text>
+                )}
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>기관 이름</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.org_name}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, org_name: text }));
+                    setErrors(prev => ({ ...prev, org_name: undefined }));
+                  }}
+                  placeholder="기관 이름을 입력하세요"
+                />
+                {errors.org_name && (
+                  <Text style={styles.errorText}>{errors.org_name}</Text>
                 )}
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>병원 주소</Text>
+                <Text style={styles.label}>기관 주소</Text>
                 <TextInput
                   style={styles.input}
-                  value={formData.address}
+                  value={formData.org_address}
                   onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, address: text }));
-                    setErrors(prev => ({ ...prev, address: undefined }));
+                    setFormData(prev => ({ ...prev, org_address: text }));
+                    setErrors(prev => ({ ...prev, org_address: undefined }));
                   }}
-                  placeholder="병원 주소를 입력하세요"
+                  placeholder="기관 주소를 입력하세요"
                 />
-                {errors.address && (
-                  <Text style={styles.errorText}>{errors.address}</Text>
+                {errors.org_address && (
+                  <Text style={styles.errorText}>{errors.org_address}</Text>
                 )}
               </View>
 
@@ -209,10 +233,10 @@ const SignUp = () => {
                 <View style={styles.idContainer}>
                   <TextInput
                     style={[styles.input, styles.idInput]}
-                    value={formData.id}
+                    value={formData.org_id}
                     onChangeText={(text) => {
-                      setFormData(prev => ({ ...prev, id: text }));
-                      setErrors(prev => ({ ...prev, id: undefined }));
+                      setFormData(prev => ({ ...prev, org_id: text }));
+                      setErrors(prev => ({ ...prev, org_id: undefined }));
                       setIsIdChecked(false);
                     }}
                     placeholder="아이디를 입력하세요"
@@ -224,8 +248,8 @@ const SignUp = () => {
                     <Text style={styles.checkButtonText}>중복확인</Text>
                   </TouchableOpacity>
                 </View>
-                {errors.id && (
-                  <Text style={styles.errorText}>{errors.id}</Text>
+                {errors.org_id && (
+                  <Text style={styles.errorText}>{errors.org_id}</Text>
                 )}
               </View>
 
@@ -233,16 +257,16 @@ const SignUp = () => {
                 <Text style={styles.label}>비밀번호</Text>
                 <TextInput
                   style={styles.input}
-                  value={formData.password}
+                  value={formData.org_pw}
                   onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, password: text }));
-                    setErrors(prev => ({ ...prev, password: undefined }));
+                    setFormData(prev => ({ ...prev, org_pw: text }));
+                    setErrors(prev => ({ ...prev, org_pw: undefined }));
                   }}
                   placeholder="비밀번호를 입력하세요"
                   secureTextEntry
                 />
-                {errors.password && (
-                  <Text style={styles.errorText}>{errors.password}</Text>
+                {errors.org_pw && (
+                  <Text style={styles.errorText}>{errors.org_pw}</Text>
                 )}
               </View>
 
@@ -267,18 +291,18 @@ const SignUp = () => {
                 <Text style={styles.label}>담당자 전화번호</Text>
                 <TextInput
                   style={styles.input}
-                  value={formData.phone}
+                  value={formData.org_phone}
                   onChangeText={(text) => {
                     const formatted = formatPhoneNumber(text);
-                    setFormData(prev => ({ ...prev, phone: formatted }));
-                    setErrors(prev => ({ ...prev, phone: undefined }));
+                    setFormData(prev => ({ ...prev, org_phone: formatted }));
+                    setErrors(prev => ({ ...prev, org_phone: undefined }));
                   }}
                   placeholder="010-0000-0000"
                   keyboardType="phone-pad"
                   maxLength={13}
                 />
-                {errors.phone && (
-                  <Text style={styles.errorText}>{errors.phone}</Text>
+                {errors.org_phone && (
+                  <Text style={styles.errorText}>{errors.org_phone}</Text>
                 )}
               </View>
 
@@ -286,17 +310,17 @@ const SignUp = () => {
                 <Text style={styles.label}>담당자 이메일</Text>
                 <TextInput
                   style={styles.input}
-                  value={formData.email}
+                  value={formData.org_email}
                   onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, email: text }));
-                    setErrors(prev => ({ ...prev, email: undefined }));
+                    setFormData(prev => ({ ...prev, org_email: text }));
+                    setErrors(prev => ({ ...prev, org_email: undefined }));
                   }}
                   placeholder="이메일을 입력하세요"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
-                {errors.email && (
-                  <Text style={styles.errorText}>{errors.email}</Text>
+                {errors.org_email && (
+                  <Text style={styles.errorText}>{errors.org_email}</Text>
                 )}
               </View>
 
@@ -307,6 +331,12 @@ const SignUp = () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <AlertModal
+        visible={openAlertModal}
+        title={modalContent.title}
+        content={modalContent.content}
+        onClose={() => setOpenAlertModal(false)}
+      />
     </>
   );
 };

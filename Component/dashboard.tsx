@@ -921,8 +921,6 @@ const styles = StyleSheet.create({
     height: 300,
     marginVertical: 20,
   },
-
-
   split_chart_container: {
     flexDirection: 'row',
     width: '100%',

@@ -3,13 +3,13 @@ import { SafeAreaView, StyleSheet, Text, View, Dimensions, ScrollView, Touchable
 import Svg, { Path, Line, Text as SvgText } from 'react-native-svg';
 import { tempDataLists, DataPoint } from './tempDummyDatas';
 
-const DetailTemp = ({ tempData }: { tempData: number }) => {
+const DetailTemp = ({ tempData, screen }: { tempData: number, screen: string }) => {
   const [data, setData] = useState<DataPoint[]>(tempDataLists);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = Math.max(screenWidth - 40, data.length * 50);
-  const chartHeight = 220;
+  const chartHeight = 200;
   const padding = 20;
   const graphHeight = chartHeight - padding * 2;
 
@@ -176,16 +176,17 @@ const DetailTemp = ({ tempData }: { tempData: number }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '98%',
     backgroundColor: '#ffffff',
+    alignSelf: 'center',
   },
   chart_container: {
     paddingHorizontal: 0,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: '#ffffff',
     borderRadius: 0,
     marginHorizontal: 0,
-    marginVertical: 16,
+    marginVertical: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -197,12 +198,12 @@ const styles = StyleSheet.create({
   },
   chart_wrapper: {
     flexDirection: 'row',
-    height: 220,
+    height: 200,
   },
   yAxis: {
     width: 40,
     justifyContent: 'space-between',
-    paddingVertical: 20,
+    paddingVertical: 18,
   },
   yAxisLabel: {
     fontSize: 10,
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   },
   playButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });

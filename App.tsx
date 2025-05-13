@@ -17,7 +17,7 @@ const App = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="PetLists"
+        initialRouteName="SignUp"
         screenOptions={{
           headerShown: false,
           contentStyle: {

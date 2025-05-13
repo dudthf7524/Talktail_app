@@ -1,11 +1,15 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {SafeAreaView, StyleSheet, Text, View, TouchableOpacity} from "react-native";
 import DetailHeart from "./detailHeart";
 import DetailTemp from "./detailTemp";
 
 const DashboardChart = ({screen} : {screen: string}) => {
-  const [selectedView, setSelectedView] = useState<'heart' | 'temp' | 'both'>('heart');
+  const [selectedView, setSelectedView] = useState<'heart' | 'temp' | 'both'>(screen === 'LANDSCAPE' ? 'both' : 'heart');
   
+  useEffect(() => {
+    setSelectedView(screen === 'LANDSCAPE' ? 'both' : 'heart');
+  }, [screen]);
+
   return (
     <>
     {screen === "PORTRAIT" && (
@@ -15,7 +19,7 @@ const DashboardChart = ({screen} : {screen: string}) => {
           style={[styles.view_button, selectedView === 'heart' && styles.selected_button]} 
           onPress={() => setSelectedView('heart')}
         >
-          <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>heart</Text>
+          <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
@@ -25,37 +29,27 @@ const DashboardChart = ({screen} : {screen: string}) => {
         </TouchableOpacity>
       </SafeAreaView>
       
-        <View style={styles.chart_container}>
-          {selectedView === 'heart' && <DetailHeart hrData={0} />}
-          {selectedView === 'temp' && <DetailTemp tempData={0} />}
-          {/* {selectedView === 'both' && screen === 'LANDSCAPE' && (
-            <View style={styles.split_chart_container}>
-              <View style={styles.half_chart}>
-                <DetailHeart hrData={0} />
-              </View>
-              <View style={styles.half_chart}>
-                <DetailTemp tempData={0} />
-              </View>
-            </View>
-          )} */}
+        <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
+          {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
+          {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen} />}
         </View>
       </SafeAreaView>
     )}
     {screen === "LANDSCAPE" && (
          <SafeAreaView style={styles.landscape_container}>
          <SafeAreaView style={styles.btn_container}>
+          <TouchableOpacity 
+              style={[styles.view_button, selectedView === 'both' && styles.selected_button]}
+              onPress={() => setSelectedView('both')}
+            >
+              <Text style={[styles.button_text, selectedView === 'both' && styles.selected_button_text]}>both</Text>
+            </TouchableOpacity>
            <TouchableOpacity 
              style={[styles.view_button, selectedView === 'heart' && styles.selected_button]} 
              onPress={() => setSelectedView('heart')}
            >
-             <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>heart</Text>
+             <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
            </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.view_button, selectedView === 'both' && styles.selected_button]}
-            onPress={() => setSelectedView('both')}
-          >
-            <Text style={[styles.button_text, selectedView === 'both' && styles.selected_button_text]}>both</Text>
-          </TouchableOpacity>
            <TouchableOpacity 
              style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
              onPress={() => setSelectedView('temp')}
@@ -63,16 +57,16 @@ const DashboardChart = ({screen} : {screen: string}) => {
              <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
            </TouchableOpacity>
          </SafeAreaView>
-           <View style={styles.chart_container}>
-             {selectedView === 'heart' && <DetailHeart hrData={0} />}
-             {selectedView === 'temp' && <DetailTemp tempData={0} />}
+           <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
+             {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
+             {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen}/>}
              {selectedView === 'both' && (
                <View style={styles.split_chart_container}>
                  <View style={styles.half_chart}>
-                   <DetailHeart hrData={0} />
+                   <DetailHeart hrData={0} screen={screen}/>
                  </View>
                  <View style={styles.half_chart}>
-                   <DetailTemp tempData={0} />
+                   <DetailTemp tempData={0} screen={screen}/>
                  </View>
                </View>
              )}
@@ -126,11 +120,14 @@ const styles = StyleSheet.create({
   split_chart_container: {
     flexDirection: 'row',
     width: '100%',
-    height: '100%',
+    height: 270,
+    alignSelf: "center",
+    marginLeft: "0.5%",
   },
   half_chart: {
-    flex: 1,
-    height: '100%',
+    width: '49%',
+    height: 270,
+    alignSelf: "center",
   },
 });
 

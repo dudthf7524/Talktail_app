@@ -7,7 +7,7 @@ type IRDataPoint = {
   value: number;
 };
 
-const DetailHeart = ({ hrData }: { hrData: number }) => {
+const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -15,7 +15,7 @@ const DetailHeart = ({ hrData }: { hrData: number }) => {
   const pointsPerView = 50; // 한 화면에 보여질 데이터 포인트 수를 50개로 변경
   const pointWidth = screenWidth / pointsPerView; // 각 포인트의 너비를 화면 너비에 맞게 계산
   const chartWidth = Math.max(screenWidth, pointsPerView * pointWidth);
-  const chartHeight = 220;
+  const chartHeight = 200;
   const padding = 0; // 좌우 패딩 제거
   const graphHeight = chartHeight - 40; // 상하 여백 유지
 
@@ -72,15 +72,6 @@ const DetailHeart = ({ hrData }: { hrData: number }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.chart_container}>
         <View style={styles.chart_wrapper}>
-          {/* Y축 레이블 */}
-          <View style={styles.yAxis}>
-            {yLabels.map((label, index) => (
-              <Text key={index} style={styles.yAxisLabel}>
-                {label}
-              </Text>
-            ))}
-          </View>
-          
           {/* 그래프 영역 */}
           <ScrollView 
             ref={scrollViewRef}
@@ -131,16 +122,17 @@ const DetailHeart = ({ hrData }: { hrData: number }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '98%',
     backgroundColor: '#ffffff',
+    alignSelf: 'center',
   },
   chart_container: {
     paddingHorizontal: 0, 
-    paddingVertical: 16, 
+    paddingVertical: 12, 
     backgroundColor: '#ffffff',
     borderRadius: 0,
     marginHorizontal: 0, 
-    marginVertical: 4, // 상하 마진 유지
+    marginVertical: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -152,18 +144,7 @@ const styles = StyleSheet.create({
   },
   chart_wrapper: {
     flexDirection: 'row',
-    height: 220,
-  },
-  yAxis: {
-    width: 40,
-    justifyContent: 'space-between',
-    paddingVertical: 20, // 상하 패딩 유지
-  },
-  yAxisLabel: {
-    fontSize: 10,
-    color: '#262626',
-    textAlign: 'right',
-    paddingRight: 5,
+    height: 200,
   },
   graphContainer: {
     flex: 1,
@@ -178,7 +159,7 @@ const styles = StyleSheet.create({
   },
   playButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });

@@ -1,89 +1,102 @@
-import React, {useState, useEffect} from "react";
-import {SafeAreaView, StyleSheet, Text, View, TouchableOpacity} from "react-native";
+import React, { useState, useEffect } from "react";
+import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, NativeModules, NativeEventEmitter } from "react-native";
 import DetailHeart from "./detailHeart";
 import DetailTemp from "./detailTemp";
 
-const DashboardChart = ({screen} : {screen: string}) => {
+
+const { MyCustomModule } = NativeModules;
+const eventEmitter = new NativeEventEmitter(MyCustomModule);
+
+const DashboardChart = ({ screen }: { screen: string }) => {
   const [selectedView, setSelectedView] = useState<'heart' | 'temp' | 'both'>(screen === 'LANDSCAPE' ? 'both' : 'heart');
-  
+  const [currentScreen, setCurrentScreen] = useState(screen);
+
+  console.log(screen)
   useEffect(() => {
-    setSelectedView(screen === 'LANDSCAPE' ? 'both' : 'heart');
+    const subscription = eventEmitter.addListener('onRotate', (event) => {
+      console.log('화면 회전 감지됨!', event);
+      if (event?.screen) {
+        setCurrentScreen(event.screen);
+      }
+    });
+
+    return () => subscription.remove();
   }, [screen]);
 
   return (
     <>
-    {screen === "PORTRAIT" && (
-      <SafeAreaView style={styles.portrait_container}>
-      <SafeAreaView style={styles.btn_container}>
-        <TouchableOpacity 
-          style={[styles.view_button, selectedView === 'heart' && styles.selected_button]} 
-          onPress={() => setSelectedView('heart')}
-        >
-          <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
-          onPress={() => setSelectedView('temp')}
-        >
-          <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-      
-        <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
-          {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
-          {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen} />}
-        </View>
-      </SafeAreaView>
-    )}
-    {screen === "LANDSCAPE" && (
-         <SafeAreaView style={styles.landscape_container}>
-         <SafeAreaView style={styles.btn_container}>
-          <TouchableOpacity 
+      {screen === "PORTRAIT" && (
+        <SafeAreaView style={styles.portrait_container}>
+          <SafeAreaView style={styles.btn_container}>
+            <TouchableOpacity
+              style={[styles.view_button, selectedView === 'heart' && styles.selected_button]}
+              onPress={() => setSelectedView('heart')}
+            >
+              <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.view_button, selectedView === 'temp' && styles.selected_button]}
+              onPress={() => setSelectedView('temp')}
+            >
+              <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+
+          <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
+            {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen} />}
+            {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen} />}
+          </View>
+        </SafeAreaView>
+      )}
+      {screen === "LANDSCAPE" && (
+        <SafeAreaView style={styles.landscape_container}>
+          <SafeAreaView style={styles.btn_container}>
+            <TouchableOpacity
               style={[styles.view_button, selectedView === 'both' && styles.selected_button]}
               onPress={() => setSelectedView('both')}
             >
               <Text style={[styles.button_text, selectedView === 'both' && styles.selected_button_text]}>both</Text>
             </TouchableOpacity>
-           <TouchableOpacity 
-             style={[styles.view_button, selectedView === 'heart' && styles.selected_button]} 
-             onPress={() => setSelectedView('heart')}
-           >
-             <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
-           </TouchableOpacity>
-           <TouchableOpacity 
-             style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
-             onPress={() => setSelectedView('temp')}
-           >
-             <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
-           </TouchableOpacity>
-         </SafeAreaView>
-           <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
-             {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
-             {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen}/>}
-             {selectedView === 'both' && (
-               <View style={styles.split_chart_container}>
-                 <View style={styles.half_chart}>
-                   <DetailHeart hrData={0} screen={screen}/>
-                 </View>
-                 <View style={styles.half_chart}>
-                   <DetailTemp tempData={0} screen={screen}/>
-                 </View>
-               </View>
-             )}
-           </View>
-         </SafeAreaView>
-    )}
+            <TouchableOpacity
+              style={[styles.view_button, selectedView === 'heart' && styles.selected_button]}
+              onPress={() => setSelectedView('heart')}
+            >
+              <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.view_button, selectedView === 'temp' && styles.selected_button]}
+              onPress={() => setSelectedView('temp')}
+            >
+              <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+          <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
+            {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen} />}
+            {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen} />}
+            {selectedView === 'both' && (
+              <View style={styles.split_chart_container}>
+                <View style={styles.half_chart}>
+                  <DetailHeart hrData={0} screen={screen} />
+                </View>
+                <View style={styles.half_chart}>
+                  <DetailTemp tempData={0} screen={screen} />
+                </View>
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
+      )}
     </>
-  
+
   );
 };
 
 const styles = StyleSheet.create({
   portrait_container: {
     width: "100%",
-    height: "auto", 
+    height: "auto",
   },
-  landscape_container : {
+  landscape_container: {
     width: "100%",
     height: "auto",
   },

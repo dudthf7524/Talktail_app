@@ -123,7 +123,7 @@ const Intro = () => {
         ]}
       >
         <Text style={styles.title}>Tailing</Text>
-        <Text style={styles.subtitle}>반려견과의 새로운 소통</Text>
+        <Text style={styles.subtitle}>반려동물과의 새로운 소통</Text>
         
         <Animated.View
           style={[

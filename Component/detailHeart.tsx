@@ -13,8 +13,8 @@ const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const screenWidth = Dimensions.get('window').width;
   const pointsPerView = 50; // 한 화면에 보여질 데이터 포인트 수를 50개로 변경
-  const pointWidth = 0 // 각 포인트의 너비를 화면 너비에 맞게 계산
-  const chartWidth = 0;
+  const pointWidth = screenWidth / pointsPerView; // 각 포인트의 너비를 화면 너비에 맞게 계산
+  const chartWidth = Math.max(screenWidth, pointsPerView * pointWidth);
   const chartHeight = 200;
   const padding = 0; // 좌우 패딩 제거
   const graphHeight = chartHeight - 40; // 상하 여백 유지

@@ -37,11 +37,11 @@ type RootStackParamList = {
   Dashboard: {
     selectedPet: {
       name: string;
-      gender: string;
-      birthDate: string;
+      gender: boolean;
+      birth: string;
       breed: string;
       isNeutered: boolean;
-      diseases: string;
+      disease: string;
     };
   };
   DetailHeart: {
@@ -119,11 +119,10 @@ declare module 'react-native-ble-manager' {
   }
 }
 
-const Dashboard = () => {
+const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
   const navigation = useNavigation<NavigationProp>();
-  const route = useRoute<DashboardScreenRouteProp>();
-  const {selectedPet} = route.params;
-  console.log('Selected Pet:', selectedPet);
+  const { selectedPet } = route.params;
+  console.log('Dashboard 속 Selected Pet:', selectedPet);
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),

@@ -9,9 +9,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
+import axios from 'axios';
+import { API_URL } from './constant/contants';
+import { setToken, setDeviceCode } from '../utils/storage';
+import MessageModal from './modal/messageModal';
 type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
@@ -36,9 +40,8 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     id: '',
     password: '',
   });
-
   const [errors, setErrors] = useState<FormErrors>({});
-
+  const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
   // 유효성 검사
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -61,72 +64,94 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       return;
     }
 
-    // 임시로 바로 PetLists로 이동
+    // try {
+    //   const response = await axios.post(`${API_URL}/user/login`, formData);
+
+    //   if(response.status === 200){
+    //     const token = response.data.data.token;
+
+    //     await setToken(token);
+    Alert.alert("로그인 성공");
+    setOpenMessageModal(true);
     navigation.navigate('PetLists');
+    //   }
+    // } catch(e){
+    //   console.error(e);
+    //   Alert.alert("로그인 실패", "아이디 또는 비밀번호를 확인해주세요.");
+    // }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Tailing</Text>
-            <Text style={styles.subtitle}>반려견과의 새로운 소통</Text>
-          </View>
-
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>아이디</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.id}
-                onChangeText={(text) => {
-                  setFormData(prev => ({ ...prev, id: text }));
-                  setErrors(prev => ({ ...prev, id: undefined }));
-                }}
-                placeholder="아이디를 입력하세요"
-                placeholderTextColor="#999999"
-              />
-              {errors.id && (
-                <Text style={styles.errorText}>{errors.id}</Text>
-              )}
+    <>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Image source={require('../assets/images/talkTail_logo.png')} style={styles.logo} />
+              <Text style={styles.subtitle}>반려동물은 Tail로 소통하고</Text>
+              <Text style={styles.subtitle}>우리는 "Talktail"로 소통합니다.</Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>비밀번호</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.password}
-                onChangeText={(text) => {
-                  setFormData(prev => ({ ...prev, password: text }));
-                  setErrors(prev => ({ ...prev, password: undefined }));
-                }}
-                placeholder="비밀번호를 입력하세요"
-                placeholderTextColor="#999999"
-                secureTextEntry
-              />
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              )}
+            <View style={styles.form}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>아이디</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.id}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, id: text }));
+                    setErrors(prev => ({ ...prev, id: undefined }));
+                  }}
+                  placeholder="아이디를 입력하세요"
+                  placeholderTextColor="#999999"
+                />
+                {errors.id && (
+                  <Text style={styles.errorText}>{errors.id}</Text>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>비밀번호</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.password}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, password: text }));
+                    setErrors(prev => ({ ...prev, password: undefined }));
+                  }}
+                  placeholder="비밀번호를 입력하세요"
+                  placeholderTextColor="#999999"
+                  secureTextEntry
+                />
+                {errors.password && (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                )}
+              </View>
+
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <Text style={styles.submitButtonText}>로그인</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.signUpButton}
+                onPress={() => navigation.navigate('SignUp')}
+              >
+                <Text style={styles.signUpButtonText}>회원가입</Text>
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>로그인</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.signUpButton}
-              onPress={() => navigation.navigate('SignUp')}
-            >
-              <Text style={styles.signUpButtonText}>회원가입</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+      <MessageModal
+        visible={openMessageModal}
+        title="로그인 성공"
+        content="로그인이 성공적으로 완료되었습니다."
+        onClose={() => setOpenMessageModal(false)}
+      />
+    </>
   );
 };
 
@@ -146,6 +171,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 60,
     marginBottom: 40,
+  },
+  logo: {
+    width: 300,
+    height: 100,
+    marginBottom: 4
   },
   title: {
     fontSize: 36,

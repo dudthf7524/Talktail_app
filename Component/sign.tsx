@@ -15,6 +15,16 @@ import Header from './header';
 import AlertModal from '../Component/modal/alertModal';
 import axios from 'axios';
 import { API_URL } from './constant/contants';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+  Login: undefined;
+  Sign: undefined;
+  // ... other screens
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type FormData = {
   deviceCode: string;
@@ -47,6 +57,7 @@ const SignUp = () => {
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
+  const navigation = useNavigation<NavigationProp>();
 
   // 전화번호 포맷팅 함수
   const formatPhoneNumber = (text: string) => {
@@ -65,10 +76,10 @@ const SignUp = () => {
       return;
     }
 
-    if (formData.org_id.length < 4) {
-      setErrors(prev => ({ ...prev, org_id: '아이디는 4자 이상이어야 합니다.' }));
-      return;
-    }
+    // if (formData.org_id.length < 4) {
+    //   setErrors(prev => ({ ...prev, org_id: '아이디는 4자 이상이어야 합니다.' }));
+    //   return;
+    // }
 
     try {
       // TODO: 실제 API 호출로 대체
@@ -154,15 +165,26 @@ const SignUp = () => {
 
   // 회원가입 제출
   const handleSubmit = async () => {
-    // if (!validateForm()) {
-    //   return;
-    // }
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       const response = await axios.post(`${API_URL}/user/signup`, formData);
 
       console.log("response : ", response);
-  
+      if(response.status === 201) {
+        Alert.alert(
+          "회원 가입 완료",
+          "로그인 화면으로 이동합니다.",
+          [
+            {
+              text: "확인",
+              onPress: () => navigation.navigate('Login')
+            }
+          ]
+        );
+      }
      
     } catch (error) {
       console.error("error : ", error);

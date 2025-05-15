@@ -10,6 +10,7 @@ import Intro from './Component/intro';
 import RegisterPet from './Component/registerPet';
 import PetLists from './Component/petLists';
 import ConnectBle from './Component/connectBle';
+import EditPet from './Component/editPet';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,6 +35,7 @@ const App = () => {
         <Stack.Screen name="RegisterPet" component={RegisterPet} />
         <Stack.Screen name="PetLists" component={PetLists} />
         <Stack.Screen name="ConnectBle" component={ConnectBle} />
+        <Stack.Screen name="EditPet" component={EditPet} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,163 +1,134 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import Svg, { Path, Line } from 'react-native-svg';
+import React, {useState, useEffect} from "react";
+import {SafeAreaView, StyleSheet, Text, View, TouchableOpacity} from "react-native";
+import DetailHeart from "./detailHeart";
+import DetailTemp from "./detailTemp";
 
-type IRDataPoint = {
-  timestamp: number;
-  value: number;
-};
-
-const DetailHeart = ({ screen }: { screen: string }) => {
-  const [data, setData] = useState<IRDataPoint[]>([]);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const isLandscape = screenWidth > screenHeight;
-  const pointsPerView = 50;
-  const pointWidth = screenWidth / pointsPerView;
-  const chartWidth = Math.max(screenWidth, pointsPerView * pointWidth);
-  const chartHeight = isLandscape ? screenHeight * 0.6 : 200;
-  const padding = 0;
-  const graphHeight = chartHeight - 40;
-
-  // 초당 50개의 데이터 추가
+const DashboardChart = ({screen} : {screen: string}) => {
+  const [selectedView, setSelectedView] = useState<'heart' | 'temp' | 'both'>(screen === 'LANDSCAPE' ? 'both' : 'heart');
+  
   useEffect(() => {
-    if (!isAutoScrolling) return;
-
-    const interval = setInterval(() => {
-      const newDataPoints: IRDataPoint[] = Array.from({ length: 50 }, (_, i) => ({
-        timestamp: Date.now() + i * 20,
-        value: Math.random() * 20000 + 100000,
-      }));
-
-      setData(prevData => {
-        const updatedData = [...prevData, ...newDataPoints];
-        return updatedData.slice(-1000);
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isAutoScrolling]);
-
-  // 자동 스크롤 효과
-  useEffect(() => {
-    if (!isAutoScrolling) return;
-
-    const scrollInterval = setInterval(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true });
-      }
-    }, 100);
-
-    return () => clearInterval(scrollInterval);
-  }, [isAutoScrolling]);
-
-  // Y축 레이블 생성
-  const yLabels = ['120000', '115000', '110000', '105000', '100000'];
-
-  // SVG Path 생성
-  const createPath = () => {
-    if (data.length === 0) return '';
-
-    const points = data.map((item, index) => {
-      const x = index * pointWidth;
-      const y = chartHeight - padding - ((item.value - 100000) / 20000) * graphHeight;
-      return `${x},${y}`;
-    });
-    return `M ${points.join(' L ')}`;
-  };
+    setSelectedView(screen === 'LANDSCAPE' ? 'both' : 'heart');
+  }, [screen]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text>Screen: {screen}</Text>
-      <Text>Width: {screenWidth}</Text>
-      <Text>Height: {screenHeight}</Text>
-      <View style={[styles.chart_container, isLandscape && { height: chartHeight }]}>
-        <View style={styles.chart_wrapper}>
-          <ScrollView 
-            ref={scrollViewRef}
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={[styles.graphContainer, isLandscape ? { height: chartHeight } : {}]}
-          >
-            <Svg width={chartWidth} height={chartHeight}>
-              {yLabels.map((_, index) => (
-                <Line
-                  key={index}
-                  x1={padding}
-                  y1={padding + (graphHeight * index) / 4}
-                  x2={chartWidth - padding}
-                  y2={padding + (graphHeight * index) / 4}
-                  stroke="#E0E0E0"
-                  strokeWidth="1"
-                />
-              ))}
-              
-              {data.length > 0 && (
-                <Path
-                  d={createPath()}
-                  stroke="#F5B75C"
-                  strokeWidth="2"
-                  fill="none"
-                />
-              )}
-            </Svg>
-          </ScrollView>
-        </View>
-        
+    <>
+    {screen === "PORTRAIT" && (
+      <SafeAreaView style={styles.portrait_container}>
+      <SafeAreaView style={styles.btn_container}>
         <TouchableOpacity 
-          style={styles.playButton} 
-          onPress={() => setIsAutoScrolling(!isAutoScrolling)}
+          style={[styles.view_button, selectedView === 'heart' && styles.selected_button]} 
+          onPress={() => setSelectedView('heart')}
         >
-          <Text style={styles.playButtonText}>
-            {isAutoScrolling ? '정지' : '재생'}
-          </Text>
+          <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
         </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        <TouchableOpacity 
+          style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
+          onPress={() => setSelectedView('temp')}
+        >
+          <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+      
+        <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
+          {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
+          {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen} />}
+        </View>
+      </SafeAreaView>
+    )}
+    {screen === "LANDSCAPE" && (
+         <SafeAreaView style={styles.landscape_container}>
+         <SafeAreaView style={styles.btn_container}>
+          <TouchableOpacity 
+              style={[styles.view_button, selectedView === 'both' && styles.selected_button]}
+              onPress={() => setSelectedView('both')}
+            >
+              <Text style={[styles.button_text, selectedView === 'both' && styles.selected_button_text]}>both</Text>
+            </TouchableOpacity>
+           <TouchableOpacity 
+             style={[styles.view_button, selectedView === 'heart' && styles.selected_button]} 
+             onPress={() => setSelectedView('heart')}
+           >
+             <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>hr</Text>
+           </TouchableOpacity>
+           <TouchableOpacity 
+             style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
+             onPress={() => setSelectedView('temp')}
+           >
+             <Text style={[styles.button_text, selectedView === 'temp' && styles.selected_button_text]}>temp</Text>
+           </TouchableOpacity>
+         </SafeAreaView>
+           <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
+             {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
+             {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen}/>}
+             {selectedView === 'both' && (
+               <View style={styles.split_chart_container}>
+                 <View style={styles.half_chart}>
+                   <DetailHeart hrData={0} screen={screen}/>
+                 </View>
+                 <View style={styles.half_chart}>
+                   <DetailTemp tempData={0} screen={screen}/>
+                 </View>
+               </View>
+             )}
+           </View>
+         </SafeAreaView>
+    )}
+    </>
+  
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    backgroundColor: '#ffffff',
-    alignSelf: 'center',
+  portrait_container: {
+    width: "100%",
+    height: "auto", 
+  },
+  landscape_container : {
+    width: "100%",
+    height: "auto",
+  },
+  btn_container: {
+    width: 166,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 'auto',
+  },
+  view_button: {
+    width: 50,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: '#F5F5F5',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selected_button: {
+    backgroundColor: '#F5B75C',
+  },
+  button_text: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  selected_button_text: {
+    color: '#FFFFFF',
   },
   chart_container: {
-    paddingHorizontal: 0,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    marginVertical: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: '100%',
   },
-  chart_wrapper: {
+  split_chart_container: {
     flexDirection: 'row',
+    width: '100%',
+    height: 270,
+    alignSelf: "center",
+    marginLeft: "0.5%",
   },
-  graphContainer: {
-    flex: 1,
-  },
-  playButton: {
-    backgroundColor: '#F5B75C',
-    paddingHorizontal: 20,
-    paddingVertical: 4,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginTop: 16,
-  },
-  playButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+  half_chart: {
+    width: '49%',
+    height: 270,
+    alignSelf: "center",
   },
 });
 
-export default DetailHeart;
+export default DashboardChart;

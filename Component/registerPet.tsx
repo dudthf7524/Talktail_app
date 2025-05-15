@@ -9,28 +9,35 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SelectDropdown from 'react-native-select-dropdown';
+import { usePetStore } from '../store/useStore';
+import { getToken } from '../utils/storage';
+import MessageModal from './modal/messageModal';
 
 type PetData = {
   name: string;
-  birthDate: Date;
+  birth: Date;
   breed: string;
-  gender: 'male' | 'female';
+  gender: boolean;
   isNeutered: boolean;
-  diseases: string;
+  disease: string;
 };
 
-const RegisterPet = () => {
-  const [petData, setPetData] = useState<PetData>({
+const RegisterPet = ({ navigation }) => {
+  const [errors, setErrors] = useState<FormErrors>({});
+  const { registerPet, registerLoading, fetchPets } = usePetStore();
+  const [openMessageModal, setOpenMessageModal] = useState(false);
+  const [formData, setFormData] = useState<PetData>({
     name: '',
-    birthDate: new Date(),
+    birth: new Date(2020, 0, 1),
     breed: '',
-    gender: 'male',
+    gender: true,
     isNeutered: false,
-    diseases: '',
+    disease: '',
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -38,7 +45,7 @@ const RegisterPet = () => {
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      setPetData(prev => ({ ...prev, birthDate: selectedDate }));
+      setFormData(prev => ({ ...prev, birth: selectedDate }));
     }
   };
 
@@ -50,24 +57,64 @@ const RegisterPet = () => {
     });
   };
 
-  const handleSubmit = () => {
-    // TODO: API 호출로 데이터 전송
-    console.log('Pet Data:', petData);
+  type FormErrors = {
+    [key in keyof PetData]?: string;
   };
 
-  const breeds = [
-    { label: '견종을 선택하세요', value: '' },
-    { label: '리트리버', value: 'retriever' },
-    { label: '말티즈', value: 'maltese' },
-    { label: '푸들', value: 'poodle' },
-    { label: '진돗개', value: 'jindo' },
-    { label: '시바견', value: 'shiba' },
-    { label: '기타', value: 'other' },
-  ];
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.name) {
+      newErrors.name = '반려동물 이름을 입력해주세요.';
+    }
+
+    if (!formData.birth) {
+      newErrors.birth = '생년월일을 입력해주세요.';
+    }
+
+    if (!formData.breed) {
+      newErrors.breed = '품종을 입력해주세요.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("오류", "로그인해주세요.");
+        navigation.navigate('Login');
+        return;
+      }
+
+      const { device_code } = token;
+
+      const petData = {
+        ...formData,
+        birth: formData.birth.getFullYear().toString() + '-' +
+          (formData.birth.getMonth() + 1).toString().padStart(2, '0') + '-' +
+          formData.birth.getDate().toString().padStart(2, '0'),
+        device_code
+      };
+
+      await registerPet(petData);
+      setOpenMessageModal(true);
+      await fetchPets();
+      navigation.navigate('PetLists');
+    } catch (error) {
+      console.error('Error registering pet:', error);
+      Alert.alert("등록 실패", "펫 등록에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
+
 
   return (
     <>
-      <Header title="반려견 정보 입력" />
+      <Header title="반려동물 등록" />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -75,15 +122,17 @@ const RegisterPet = () => {
         >
           <ScrollView style={styles.scrollView}>
             <View style={styles.form}>
-              {/* 반려견 이름 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>반려견 이름</Text>
+                <Text style={styles.label}>반려동물 이름</Text>
                 <TextInput
                   style={styles.input}
-                  value={petData.name}
-                  onChangeText={(text) => setPetData(prev => ({ ...prev, name: text }))}
-                  placeholder="반려견 이름을 입력하세요"
+                  value={formData.name}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+                  placeholder="반려동물 이름을 입력하세요"
                 />
+                {errors.name && (
+                  <Text style={styles.errorText}>{errors.name}</Text>
+                )}
               </View>
 
               {/* 생년월일 */}
@@ -94,37 +143,35 @@ const RegisterPet = () => {
                   onPress={() => setShowDatePicker(true)}
                 >
                   <Text style={styles.dateButtonText}>
-                    {formatDate(petData.birthDate)}
+                    {formatDate(formData.birth)}
                   </Text>
                 </TouchableOpacity>
                 {showDatePicker && (
                   <DateTimePicker
-                    value={petData.birthDate}
+                    value={formData.birth}
                     mode="date"
                     display="default"
                     onChange={handleDateChange}
                     maximumDate={new Date()}
                   />
                 )}
+                {errors.birth && (
+                  <Text style={styles.errorText}>{errors.birth}</Text>
+                )}
               </View>
 
               {/* 견종 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>견종</Text>
-                <SelectDropdown
-                  data={breeds}
-                  onSelect={(selectedItem) => {
-                    setPetData(prev => ({ ...prev, breed: selectedItem.value }));
-                  }}
-                  defaultButtonText="견종을 선택하세요"
-                  buttonTextAfterSelection={(selectedItem) => selectedItem.label}
-                  rowTextForSelection={(item) => item.label}
-                  buttonStyle={styles.dropdownButton}
-                  buttonTextStyle={styles.dropdownButtonText}
-                  dropdownStyle={styles.dropdown}
-                  rowStyle={styles.dropdownRow}
-                  rowTextStyle={styles.dropdownRowText}
+                <Text style={styles.label}>품종</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.breed}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, breed: text }))}
+                  placeholder="품종을 입력하세요(ex : 말티즈, 푸들)"
                 />
+                {errors.breed && (
+                  <Text style={styles.errorText}>{errors.breed}</Text>
+                )}
               </View>
 
               {/* 성별 */}
@@ -134,25 +181,25 @@ const RegisterPet = () => {
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      petData.gender === 'male' && styles.radioButtonSelected,
+                      formData.gender && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setPetData(prev => ({ ...prev, gender: 'male' }))}
+                    onPress={() => setFormData(prev => ({ ...prev, gender: true }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      petData.gender === 'male' && styles.radioButtonTextSelected,
+                      formData.gender && styles.radioButtonTextSelected,
                     ]}>수컷</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      petData.gender === 'female' && styles.radioButtonSelected,
+                      !formData.gender && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setPetData(prev => ({ ...prev, gender: 'female' }))}
+                    onPress={() => setFormData(prev => ({ ...prev, gender: false }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      petData.gender === 'female' && styles.radioButtonTextSelected,
+                      !formData.gender && styles.radioButtonTextSelected,
                     ]}>암컷</Text>
                   </TouchableOpacity>
                 </View>
@@ -165,56 +212,72 @@ const RegisterPet = () => {
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      petData.isNeutered && styles.radioButtonSelected,
+                      formData.isNeutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setPetData(prev => ({ ...prev, isNeutered: true }))}
+                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: true }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      petData.isNeutered && styles.radioButtonTextSelected,
+                      formData.isNeutered && styles.radioButtonTextSelected,
                     ]}>예</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      !petData.isNeutered && styles.radioButtonSelected,
+                      !formData.isNeutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setPetData(prev => ({ ...prev, isNeutered: false }))}
+                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: false }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      !petData.isNeutered && styles.radioButtonTextSelected,
+                      !formData.isNeutered && styles.radioButtonTextSelected,
                     ]}>아니오</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* 앓고 있는 질병 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>앓고 있는 질병</Text>
+                <Text style={styles.label}>병명</Text>
                 <TextInput
                   style={styles.textArea}
-                  value={petData.diseases}
-                  onChangeText={(text) => setPetData(prev => ({ ...prev, diseases: text }))}
-                  placeholder="앓고 있는 질병을 입력하세요"
+                  value={formData.disease}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, disease: text }))}
+                  placeholder="병명을 입력하세요"
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
                 />
               </View>
 
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>저장하기</Text>
+              <TouchableOpacity
+                style={[styles.submitButton, registerLoading && styles.submitButtonDisabled]}
+                onPress={handleRegister}
+                disabled={registerLoading}
+              >
+                <Text style={styles.submitButtonText}>
+                  {registerLoading ? '등록 중...' : '등록하기'}
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <MessageModal
+        visible={openMessageModal}
+        title="등록 완료"
+        content="반려동물이 등록되었습니다."
+        onClose={() => setOpenMessageModal(false)}
+      />
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -330,6 +393,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#cccccc',
   },
 });
 

@@ -20,7 +20,7 @@ const App = () => {
     <BLEProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="ConnectBle"
+          initialRouteName="Login"
           screenOptions={{
             headerShown: false,
             contentStyle: {

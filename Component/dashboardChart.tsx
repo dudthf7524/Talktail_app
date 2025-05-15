@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 
 type IRDataPoint = {
@@ -11,20 +11,8 @@ const DetailHeart = ({ screen }: { screen: string }) => {
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
-  
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
-  const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      setScreenWidth(Dimensions.get('window').width);
-      setScreenHeight(Dimensions.get('window').height);
-    };
-
-    const subscription = Dimensions.addEventListener('change', updateDimensions);
-    return () => subscription?.remove();
-  }, []);
-
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const isLandscape = screenWidth > screenHeight;
   const pointsPerView = 50;
   const pointWidth = screenWidth / pointsPerView;

@@ -16,12 +16,13 @@ import axios from 'axios';
 import { API_URL } from './constant/contants';
 import { setToken, setDeviceCode } from '../utils/storage';
 import MessageModal from './modal/messageModal';
-type RootStackParamList = {
+export type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
   Dashboard: undefined;
   RegisterPet: undefined;
   PetLists: undefined;
+  ConnetcBleIos: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;

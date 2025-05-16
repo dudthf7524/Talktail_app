@@ -31,12 +31,13 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>이 앱은 Bluetooth 기능을 사용하여 기기와 통신합니다.</string>
-	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>이 앱은 Bluetooth 기기와 통신하기 위해 권한이 필요합니다.</string>
+	
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>BLE 스캔을 위해 위치 접근 권한이 필요합니다.</string>
+
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

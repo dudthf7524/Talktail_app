@@ -12,6 +12,7 @@ import RegisterPet from './Component/registerPet';
 import PetLists from './Component/petLists';
 import ConnectBle from './Component/connectBle';
 import EditPet from './Component/editPet';
+import ConnetcBleIos from './Component/connetcBleIos';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,7 +21,7 @@ const App = () => {
     <BLEProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName="ConnetcBleIos"
           screenOptions={{
             headerShown: false,
             contentStyle: {
@@ -38,6 +39,8 @@ const App = () => {
           <Stack.Screen name="PetLists" component={PetLists} />
           <Stack.Screen name="ConnectBle" component={ConnectBle} />
           <Stack.Screen name="EditPet" component={EditPet} />
+          <Stack.Screen name="ConnetcBleIos" component={ConnetcBleIos} />
+
         </Stack.Navigator>
       </NavigationContainer>
     </BLEProvider>

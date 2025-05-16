@@ -21,6 +21,7 @@
     "react-native-ble-manager": "^12.1.4",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "^2.25.0",
+    "react-native-permissions": "^5.4.0",
     "react-native-quick-base64": "^2.1.2",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^3.37.0",

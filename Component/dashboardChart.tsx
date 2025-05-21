@@ -30,7 +30,7 @@ const DashboardChart = ({screen} : {screen: string}) => {
       </SafeAreaView>
       
         <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
-          {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
+          {selectedView === 'heart' && <DetailHeart screen={screen}/>}
           {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen} />}
         </View>
       </SafeAreaView>
@@ -58,12 +58,12 @@ const DashboardChart = ({screen} : {screen: string}) => {
            </TouchableOpacity>
          </SafeAreaView>
            <View style={[styles.chart_container, selectedView === 'both' && styles.split_chart_container]}>
-             {selectedView === 'heart' && <DetailHeart hrData={0} screen={screen}/>}
+             {selectedView === 'heart' && <DetailHeart screen={screen}/>}
              {selectedView === 'temp' && <DetailTemp tempData={0} screen={screen}/>}
              {selectedView === 'both' && (
                <View style={styles.split_chart_container}>
                  <View style={styles.half_chart}>
-                   <DetailHeart hrData={0} screen={screen}/>
+                   <DetailHeart screen={screen}/>
                  </View>
                  <View style={styles.half_chart}>
                    <DetailTemp tempData={0} screen={screen}/>
@@ -74,7 +74,6 @@ const DashboardChart = ({screen} : {screen: string}) => {
          </SafeAreaView>
     )}
     </>
-  
   );
 };
 

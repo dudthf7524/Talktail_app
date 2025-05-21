@@ -14,7 +14,7 @@ import {
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SelectDropdown from 'react-native-select-dropdown';
-import { usePetStore } from '../store/useStore';
+import { userStore } from '../store/userStore';
 import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
 type PetData = {
@@ -28,7 +28,7 @@ type PetData = {
 
 const EditPet = ({ route, navigation }) => {
   const { pet } = route.params;
-  const { updatePet, updateLoading, updateError, fetchPets } = usePetStore();
+  const { updatePet, updateLoading, updateError, fetchPets } = userStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
     name: '',
@@ -79,6 +79,7 @@ const EditPet = ({ route, navigation }) => {
         navigation.navigate('Login');
         return;
       }
+      
 
       const { device_code } = token;
       if (!device_code) {
@@ -104,16 +105,6 @@ const EditPet = ({ route, navigation }) => {
       Alert.alert("수정 실패", "펫 정보 수정에 실패했습니다. 다시 시도해주세요.");
     }
   };
-
-  const breeds = [
-    { label: '견종을 선택하세요', value: '' },
-    { label: '리트리버', value: 'retriever' },
-    { label: '말티즈', value: 'maltese' },
-    { label: '푸들', value: 'poodle' },
-    { label: '진돗개', value: 'jindo' },
-    { label: '시바견', value: 'shiba' },
-    { label: '기타', value: 'other' },
-  ];
 
   return (
     <>

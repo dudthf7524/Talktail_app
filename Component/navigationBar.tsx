@@ -1,36 +1,45 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+  Dashboard: undefined;
+  ConnectBle: undefined;
+  PetList: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const NavigationBar: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
+      <Pressable 
         style={styles.button}
         onPress={() => navigation.navigate('Dashboard')}
       >
-        <Text style={styles.buttonText}>홈</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
+        <Text style={styles.buttonText}>개목록</Text>
+      </Pressable>
+      <Pressable 
         style={styles.button}
-        onPress={() => navigation.navigate('ConnectBle')}
+        onPress={() => navigation.navigate('Record')}
       >
-        <Text style={styles.buttonText}>블루투스</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
+        <Text style={styles.buttonText}>데이터목록</Text>
+      </Pressable>
+      {/* <Pressable 
         style={styles.button}
         onPress={() => navigation.navigate('PetList')}
       >
-        <Text style={styles.buttonText}>반려동물</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>알림</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>설정</Text>
-      </TouchableOpacity>
+        <Text style={styles.buttonText}></Text>
+      </Pressable>
+      <Pressable style={styles.button}>
+        <Text style={styles.buttonText}></Text>
+      </Pressable>
+      <Pressable style={styles.button}>
+        <Text style={styles.buttonText}></Text>
+      </Pressable> */}
     </View>
   );
 };

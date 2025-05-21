@@ -24,7 +24,7 @@ interface PetFormData {
   device_code: string;
 }
 
-interface PetStore {
+interface UserStore {
   pets: Pet[];
   loadLoading: boolean;
   loadError: string | null;
@@ -40,7 +40,7 @@ interface PetStore {
   deletePet: (petCode: string) => Promise<void>;
 }
 
-export const usePetStore = create<PetStore>((set, get) => ({
+export const userStore = create<UserStore>((set, get) => ({
   pets: [],
   loadLoading: false,
   loadError: null,
@@ -60,6 +60,7 @@ export const usePetStore = create<PetStore>((set, get) => ({
       }
 
       const response = await axios.post(`${API_URL}/pet/load`, {
+        // device_code: 'DEVICE001'
         device_code: token.device_code
       });
 

@@ -3,11 +3,11 @@ import {SafeAreaView, StyleSheet, Text, View, Image} from "react-native";
 
 interface Pet {
   name: string;
-  gender: string;
+  gender: boolean;
   birthDate: string;
   breed: string;
   isNeutered: boolean;
-  diseases: string;
+  disease: string;
 }
 
 interface DashboardInfoProps {
@@ -30,7 +30,7 @@ const DashboardInfo = ({screen, pet}: DashboardInfoProps) => {
             <View style={styles.info_box}>
               <Image 
                 source={
-                  pet.gender === 'male' 
+                  pet.gender 
                     ? require("../assets/images/gender_male.png")
                     : require("../assets/images/gender_female.png")
                 } 
@@ -40,7 +40,7 @@ const DashboardInfo = ({screen, pet}: DashboardInfoProps) => {
             </View>
           </View>
           <View style={styles.diseases_container}>
-            <Text style={styles.info_diseases}>병명 : {pet.diseases}</Text>
+            <Text style={styles.info_diseases}>병명 : {pet.disease}</Text>
           </View>
         </>
       )}
@@ -51,7 +51,7 @@ const DashboardInfo = ({screen, pet}: DashboardInfoProps) => {
             <View style={styles.info_box}>
               <Image 
                 source={
-                  pet.gender === 'male' 
+                  pet.gender
                     ? require("../assets/images/gender_male.png")
                     : require("../assets/images/gender_female.png")
                 } 
@@ -59,7 +59,7 @@ const DashboardInfo = ({screen, pet}: DashboardInfoProps) => {
               />
               <Text style={[styles.info_age, styles.info_age_land]}>{pet.breed}</Text>
             </View>
-            <Text style={[styles.info_diseases, styles.info_diseases_land]}> 병명 : {pet.diseases}</Text>
+            <Text style={[styles.info_diseases, styles.info_diseases_land]}> 병명 : {pet.disease}</Text>
           </View>
         </>
       )}

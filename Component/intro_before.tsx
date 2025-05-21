@@ -150,7 +150,7 @@ const Intro = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#121212',
     justifyContent: 'center',
     alignItems: 'center',
   },

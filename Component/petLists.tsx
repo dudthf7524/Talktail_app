@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -6,174 +6,172 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Alert,
+  Image
 } from 'react-native';
 import Header from './header';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { userStore } from '../store/userStore';
+import type { Pet } from '../store/userStore';
+import ConfirmModal from './modal/confirmModal';
+import MessageModal from './modal/messageModal';
 
 type RootStackParamList = {
   PetLists: undefined;
   RegisterPet: undefined;
+  EditPet: {
+    pet: {
+      pet_code: string;
+      name: string;
+      birth: string;
+      breed: string;
+      gender: boolean;
+      isNeutered: boolean;
+      disease: string;
+    };
+  };
   Dashboard: {
     selectedPet: {
       name: string;
-      gender: string;
-      birthDate: string;
+      gender: boolean;
+      birth: string;
       breed: string;
       isNeutered: boolean;
-      diseases: string;
+      disease: string;
     };
   };
+  ConnectBle: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-type PetData = {
-  id: string;
-  name: string;
-  birthDate: string;
-  breed: string;
-  gender: 'male' | 'female';
-  isNeutered: boolean;
-  diseases: string;
-};
-
-// 샘플 데이터
-const samplePets: PetData[] = [
-  {
-    id: '1',
-    name: '멍멍이',
-    birthDate: '2020-05-15',
-    breed: '리트리버',
-    gender: 'male',
-    isNeutered: true,
-    diseases: '심장사상충, 슬개골 탈구',
-  },
-  {
-    id: '2',
-    name: '초코',
-    birthDate: '2021-03-20',
-    breed: '말티즈',
-    gender: 'female',
-    isNeutered: false,
-    diseases: '없음',
-  },
-  {
-    id: '3',
-    name: '바둑이',
-    birthDate: '2019-11-08',
-    breed: '진돗개',
-    gender: 'male',
-    isNeutered: true,
-    diseases: '관절염',
-  },
-  {
-    id: '4',
-    name: '나비',
-    birthDate: '2022-01-30',
-    breed: '푸들',
-    gender: 'female',
-    isNeutered: false,
-    diseases: '없음',
-  },
-  {
-    id: '5',
-    name: '단비',
-    birthDate: '2021-07-12',
-    breed: '시바견',
-    gender: 'male',
-    isNeutered: true,
-    diseases: '알레르기성 피부염',
-  },
-];
-
-const PetLists = () => {
-  const navigation = useNavigation<NavigationProp>();
+const PetLists = ({ navigation }) => {
+  const { pets, loadLoading, loadError, fetchPets, deletePet, deleteLoading, deleteError } = userStore();
   const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
+  const [openConfirmModal, setOpenConfirmModal] = useState<boolean>(false);
+  const [deletePetId, setDeletePetId] = useState<string | null>(null);
+  const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
 
   const toggleExpand = (petId: string) => {
     setExpandedPetId(expandedPetId === petId ? null : petId);
   };
 
-  const handlePetSelect = (pet: PetData) => {
-    setSelectedPetId(selectedPetId === pet.id ? null : pet.id);
+  const handlePetSelect = (petId: string) => {
+    setSelectedPetId(selectedPetId === petId ? null : petId);
   };
 
-  const handleMonitoringPress = () => {
-    console.log("AA");
-    if (selectedPetId) {
-      const selectedPet = samplePets.find(pet => pet.id === selectedPetId);
-      if (selectedPet) {
-        navigation.navigate('Dashboard', {
-          selectedPet: {
-            name: selectedPet.name,
-            gender: selectedPet.gender,
-            birthDate: selectedPet.birthDate,
-            breed: selectedPet.breed,
-            isNeutered: selectedPet.isNeutered,
-            diseases: selectedPet.diseases
-          }
-        });
+  const handleConnectBle = (pet: Pet) => {
+    const selectedPet = pets.find((pet) => pet.pet_code === selectedPetId)
+    navigation.navigate('ConnectBle', {
+      selectedPet
       }
+    );
+  };
+
+  useEffect(() => {
+    fetchPets();
+  }, []);
+
+  if (loadLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>로딩 중...</Text>
+      </View>
+    );
+  }
+  // if (deleteLoading) {
+  //   return (
+  //     <View style={styles.container}>
+  //       <Text>삭제 중...</Text>
+  //     </View>
+  //   );
+  // }
+
+  if (loadError) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{loadError}</Text>
+      </View>
+    );
+  }
+  if (deleteError) {  
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{deleteError}</Text>
+      </View>
+    );
+  }
+
+  const handleDelete = async () => {
+    if (deletePetId) {
+      await deletePet(deletePetId);
+      setOpenConfirmModal(false); 
+      setOpenMessageModal(true);
+      fetchPets();
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  };
-
+  } 
   return (
     <>
       <Header title="반려견 목록" />
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.scrollView}>
           <View style={styles.petList}>
-            {samplePets.map((pet) => (
+            {pets.map((pet) => (
               <TouchableOpacity
-                key={pet.id}
+                key={pet.pet_code}
                 style={[
                   styles.petCard,
-                  selectedPetId === pet.id && styles.selectedPetCard
+                  selectedPetId === pet.pet_code && styles.selectedPetCard
                 ]}
-                onPress={() => handlePetSelect(pet)}
+                onPress={() => handlePetSelect(pet.pet_code)}
               >
                 <View style={styles.petInfo}>
                   <View style={styles.nameContainer}>
                     <Text style={styles.petName}>{pet.name}</Text>
-                    <Text style={styles.petBreed}>{pet.breed}</Text>
+                    {/* <Text style={styles.petBreed}>{pet.breed}</Text> */}
+                    <View style={styles.btn_box}>
+                      <TouchableOpacity 
+                        style={styles.btn}
+                        onPress={() => navigation.navigate('EditPet', { pet })}
+                      >
+                        <Image source={require('../assets/images/btn_edit.png')} style={styles.btn_icon} />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.btn} 
+                        onPress={() => {
+                          setDeletePetId(pet.pet_code);
+                          setOpenConfirmModal(true);
+                        }}
+                      >
+                        <Image source={require('../assets/images/btn_delete.png')} style={styles.btn_icon} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   <View style={styles.detailsContainer}>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailText}>
-                        생년월일: {formatDate(pet.birthDate)}
-                      </Text>
-                      <Text style={styles.detailText}>
-                        성별: {pet.gender === 'male' ? '수컷' : '암컷'}
+                        생년월일: {pet.birth}
                       </Text>
                     </View>
-                    <Text style={styles.detailText}>
-                      중성화: {pet.isNeutered ? '완료' : '미완료'}
-                    </Text>
+                    <View style={styles.gender_breed_box}>
+                      <Image source={pet.gender ? require("../assets/images/gender_male.png") : require("../assets/images/gender_female.png")} style={styles.gender_icon} />
+                      <Text style={styles.breed_text}>{pet.breed}</Text>
+                    </View>
                   </View>
-                  {expandedPetId === pet.id && (
+                  {expandedPetId === pet.pet_code && (
                     <View style={styles.diseasesContainer}>
+                      <Text style={styles.isNeuteredText}>중성화 여부 : {pet.isNeutered ? '완료' : '미완료'}</Text>
                       <Text style={styles.diseasesTitle}>앓고 있는 질병</Text>
-                      <Text style={styles.diseasesText}>{pet.diseases}</Text>
+                      <Text style={styles.diseasesText}>{pet.disease}</Text>
                     </View>
                   )}
                   <TouchableOpacity
                     style={styles.moreButton}
-                    onPress={() => toggleExpand(pet.id)}
+                    onPress={() => toggleExpand(pet.pet_code)}
                   >
                     <Text style={styles.moreButtonText}>
-                      {expandedPetId === pet.id ? '접기' : '질병보기'}
+                      {expandedPetId === pet.pet_code ? '접기' : '질병보기'}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -183,13 +181,28 @@ const PetLists = () => {
         </ScrollView>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={selectedPetId ? handleMonitoringPress : () => navigation.navigate('RegisterPet')}
+          onPress={selectedPetId ? handleConnectBle : () => navigation.navigate('RegisterPet')}
         >
           <Text style={styles.addButtonText}>
-            {selectedPetId ? '모니터링 보기' : '반려견 등록하기'}
+            {selectedPetId ? '모니터링 보기' : '반려동물 등록하기'}
           </Text>
         </TouchableOpacity>
       </SafeAreaView>
+      <ConfirmModal
+        visible={openConfirmModal}
+        title="삭제 확인"
+        content="정말로 삭제하시겠습니까?"
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={handleDelete}
+        onCancel={() => setOpenConfirmModal(false)}
+      />
+      <MessageModal
+        visible={openMessageModal}
+        title="삭제 완료"
+        content="펫이 삭제되었습니다."
+        onClose={() => setOpenMessageModal(false)}
+      />
     </>
   );
 };
@@ -256,6 +269,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF5F2',
     borderRadius: 8,
   },
+  isNeuteredText: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 4,
+  },
   diseasesTitle: {
     fontSize: 14,
     fontWeight: '600',
@@ -275,7 +293,7 @@ const styles = StyleSheet.create({
   },
   moreButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
   },
   addButton: {
@@ -293,8 +311,48 @@ const styles = StyleSheet.create({
   selectedPetCard: {
     borderColor: '#F0663F',
     borderWidth: 2,
-    backgroundColor: '#FFF5F2',
+    backgroundColor: '#FFC4B4',
   },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  btn_box: {
+    width: 60,
+    height: 24,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  btn: {
+    width: 24,
+    height: 24,
+  },
+  btn_icon : {
+    width: '100%',
+    height: '100%',
+  },
+  gender_breed_box :{
+    width: '100%',
+    height: 16,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 0,
+  },
+  gender_icon : {
+    width: 16,
+    height: 16,
+  },
+  breed_text : {
+    width: 'auto',
+    height: 16,
+    fontSize: 14,
+    color: '#666666',
+    margin: 0,
+  }
 });
 
 export default PetLists; 

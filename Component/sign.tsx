@@ -17,6 +17,7 @@ import axios from 'axios';
 import { API_URL } from './constant/contants';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { deviceStore } from '../store/deviceStore';
 
 type RootStackParamList = {
   Login: undefined;
@@ -55,9 +56,11 @@ const SignUp = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isIdChecked, setIsIdChecked] = useState(false);
+  const [isDeviceCodeChecked, setIsDeviceCodeChecked] = useState(false);
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const navigation = useNavigation<NavigationProp>();
+  const { checkCode, checkLoading, checkError } = deviceStore();
 
   // 전화번호 포맷팅 함수
   const formatPhoneNumber = (text: string) => {
@@ -67,6 +70,32 @@ const SignUp = () => {
       return `${match[1]}-${match[2]}-${match[3]}`;
     }
     return text;
+  };
+
+  // 디바이스 코드 확인
+  const checkDeviceCode = async () => {
+    if (!formData.deviceCode) {
+      setErrors(prev => ({ ...prev, deviceCode: '디바이스 코드를 입력해주세요.' }));
+      return;
+    }
+
+    try {
+      console.log("aaformData.deviceCode : ", formData.deviceCode);
+      await checkCode(formData.deviceCode);
+      setErrors(prev => ({ ...prev, deviceCode: undefined }));
+      setIsDeviceCodeChecked(true);
+      setModalContent({
+        title: '사용 가능',
+        content: '사용 가능한 디바이스 코드입니다.',
+      });
+    } catch (error) {
+      setIsDeviceCodeChecked(false);
+      setModalContent({
+        title: '사용 불가',
+        content: checkError || '유효하지 않은 디바이스 코드입니다.',
+      });
+    }
+    setOpenAlertModal(true);
   };
 
   // 아이디 중복 체크
@@ -117,6 +146,8 @@ const SignUp = () => {
 
     if (!formData.deviceCode) {
       newErrors.deviceCode = '디바이스 코드를 입력해주세요.';
+    } else if (!isDeviceCodeChecked) {
+      newErrors.deviceCode = '디바이스 코드 확인이 필요합니다.';
     }
 
     if (!formData.org_name) {
@@ -165,9 +196,9 @@ const SignUp = () => {
 
   // 회원가입 제출
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    // if (!validateForm()) {
+    //   return;
+    // }
 
     try {
       const response = await axios.post(`${API_URL}/user/signup`, formData);
@@ -198,26 +229,34 @@ const SignUp = () => {
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoidingView}
+          style={styles.container}
         >
           <ScrollView style={styles.scrollView}>
             <View style={styles.form}>
-            <View style={styles.inputGroup}>
-                <Text style={styles.label}>디바이스 코드</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.deviceCode}
-                  onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, deviceCode: text }));
-                    setErrors(prev => ({ ...prev, deviceCode: undefined }));
-                  }}
-                  placeholder="상품 포장안에 있는 코드를 입력하세요"
-                  autoCapitalize="characters"
-                />
+              <View style={styles.inputGroup}>
+                <Text style={styles.deviceLabel}>디바이스 코드</Text>
+                <View style={styles.idContainer}>
+                  <TextInput
+                    style={[styles.input, styles.idInput]}
+                    value={formData.deviceCode}
+                    onChangeText={(text) => {
+                      setFormData(prev => ({ ...prev, deviceCode: text }));
+                      setIsDeviceCodeChecked(false);
+                    }}
+                    placeholder="디바이스 코드를 입력하세요"
+                  />
+                  <TouchableOpacity
+                    style={styles.checkButton}
+                    onPress={checkDeviceCode}
+                  >
+                    <Text style={styles.checkButtonText}>확인</Text>
+                  </TouchableOpacity>
+                </View>
                 {errors.deviceCode && (
                   <Text style={styles.errorText}>{errors.deviceCode}</Text>
                 )}
               </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>기관 이름</Text>
                 <TextInput
@@ -368,9 +407,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
@@ -382,6 +418,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#F5B75C',
+  },
+  deviceLabel: {
+    fontSize: 20,
     fontWeight: '600',
     marginBottom: 8,
     color: '#F5B75C',

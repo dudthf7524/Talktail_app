@@ -18,53 +18,23 @@ import {
   Image,
   ScrollView,
   Alert,
-  ScaledSize,
 } from 'react-native';
 import axios from 'axios';
-import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useNavigation} from '@react-navigation/native';
 import {Buffer} from 'buffer';
 import dayjs from 'dayjs';
-import Header from "./header"
-import NavigationBar from './navigationBar';
-import DetailHeart from './detailHeart';
-import DetailTemp from './detailTemp';
-import DashboardInfo from './dashboardInfo';
-import DashboardChart from './dashboardChart';
-import DashboardData from './dashboardData';
-
-type RootStackParamList = {
-  Dashboard: {
-    selectedPet: {
-      name: string;
-      gender: boolean;
-      birth: string;
-      breed: string;
-      isNeutered: boolean;
-      disease: string;
-    };
-  };
-  DetailHeart: {
-    hrData: number;
-  };
-  DetailTemp: {
-    tempData: number;
-  };
-};
-
-type DashboardScreenRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
 const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+// const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
 const characteristicUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
 // const CHARACTERISTIC_UUID_RX = '2A37';
 const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-const targetDeviceName = 'Zephy';
+const targetDeviceName = 'Zephy46';
 const ALLOW_DUPLICATES = true;
 const convertToAscii = (numbers: number[]): string => {
   const asciiChars: string[] = numbers.map(number =>
@@ -101,8 +71,10 @@ async function requestLocationPermission() {
     );
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       console.log('Location permission granted');
+      // 위치 권한이 부여되었습니다. BLE 작업을 계속할 수 있습니다.
     } else {
       console.log('Location permission denied');
+      // 위치 권한이 거부되었습니다. 적절한 처리를 해야 합니다.
     }
   } catch (err) {
     console.warn(err);
@@ -116,10 +88,8 @@ declare module 'react-native-ble-manager' {
   }
 }
 
-const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
-  const navigation = useNavigation<NavigationProp>();
-  // const { selectedPet } = route.params;
-  // console.log('Dashboard 속 Selected Pet:', selectedPet);
+const ConnectBleComponentRaw = ({route}) => {
+  const navigation = useNavigation();
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
@@ -142,11 +112,6 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
   const [hrData, setHrData] = useState(0);
   const [spo2Data, setSpo2Data] = useState(0);
   const [tempData, setTempData] = useState(0);
-
-  const [orientation, setOrientation] = useState('PORTRAIT');
-
-  const [showControls, setShowControls] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
 
   // <HomeComponent bleData={rawDatas} />;
 
@@ -205,40 +170,29 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
     // setRawDatas(0);
   };
   const [currentTime, setCurrentTime] = useState('');
-  // const formatDateTime = (date: Date): string => {
-  //   const updatedDate = new Date(date);
-  //   const options = {
-  //     year: 'numeric',
-  //     month: '2-digit',
-  //     day: '2-digit',
-  //     hour: '2-digit',
-  //     minute: '2-digit',
-  //     second: '2-digit',
-  //     hour12: false,
-  //   };
+  const formatDateTime = (date: Date): string => {
+    const updatedDate = new Date(date);
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    };
 
-  //   return updatedDate.toLocaleString('ko-KR', options);
-  // };
-  // const checkCurrentTime = () => {
-  //   const formattedTime = formatDateTime(new Date());
-  //   return formattedTime;
-  // };
+    return updatedDate.toLocaleString('ko-KR', options);
+  };
+  const checkCurrentTime = () => {
+    const formattedTime = formatDateTime(new Date());
+    return formattedTime;
+  };
   const [dataStorage, setDataStorage] = useState<
     {time: string; ir: number; red: number}[]
   >([]);
 
-  // sendDatas 상태 타입 정의 및 초기화 주석 처리
-  // interface SensorData {
-  //   red: number | null;
-  //   ir: number | null;
-  //   SpO2: number | null;
-  //   HR: number | null;
-  //   TEMP: number | null;
-  //   time: string | null;
-  // }
-
-  // const [sendDatas, setSendDatas] = useState<SensorData[]>([]);
-
+  const [sendDatas, setSendDatas] = useState([]);
   const parseData = (
     input: string,
   ): {
@@ -289,93 +243,124 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
         setTempData(data.TEMP);
       }
 
-      // sendDatas 상태 타입 정의 및 초기화 주석 처리
-      // setSendDatas(prevData => [
-      //   ...prevData,
-      //   {
-      //     red: data.red,
-      //     ir: data.ir,
-      //     SpO2: data.SpO2,
-      //     HR: data.HR,
-      //     TEMP: data.TEMP,
-      //     time: data.time,
-      //   },
-      // ]);
+      setSendDatas(prevData => [
+        ...prevData,
+        {
+          red: data.red,
+          ir: data.ir,
+          SpO2: data.SpO2,
+          HR: data.HR,
+          TEMP: data.TEMP,
+          time: data.time,
+        },
+      ]);
     }
 
     return data;
   };
 
-  // const sendArray = async () => {
-  //   try {
-  //     // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
+  const sendArray = async () => {
+    try {
+      // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
 
-  //     const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
+      const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
 
-  //     // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
+      // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
 
-  //     // const apiUrl = 'http://localhost:3000/receive/arrs';
-  //     // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
-  //     // const apiUrl = 'http://localhost:3000/receive/arrs';
-  //     // console.log('sended dataLists : ', dataLists);
-  //     const response = await axios.post(apiUrl, sendDatas);
-  //     if (response.status === 200) {
-  //       Alert.alert('Success Message', 'send datas');
-  //       setSendDatas([]);
-  //     }
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // };
-  // BLE 데이터 처리 부분 주석 처리
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // console.log('sended dataLists : ', dataLists);
+      const response = await axios.post(apiUrl, sendDatas);
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send datas');
+        setSendDatas([]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const handleUpdateValueForCharacteristic = (
     data: BleManagerDidUpdateValueForCharacteristicEvent,
   ) => {
-    // try {
-    //   const {value} = data;
-    //   if (!value) return;
+    const {value} = data;
 
-    //   // Base64 문자열로 변환
-    //   const base64String = Array.from(value)
-    //     .map(byte => String.fromCharCode(byte))
-    //     .join('');
-      
-    //   const decodedValue = Buffer.from(base64String, 'base64').toString('utf-8');
-    //   const parsedData = parseData(decodedValue);
-    //   console.log('Parsed Data: ', parsedData);
-    // } catch (error) {
-    //   console.error('Error processing BLE data:', error);
-    // }
+    // Base64로 인코딩된 값을 디코딩
+    const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+
+    // console.log('value : ', decodedValue);
+    const parsedData = parseData(decodedValue);
+    console.log('Parsed Data: ', parsedData);
+
+    // console.log('AAAA');
+    // const {value, characteristic} = data;
+    // console.log('value : ', value);
+    // console.log('characteristic : ', characteristic);
+
+    // const decodedData = Buffer.from(value, 'base64').toString();
+
+    // console.log(`Received data from characteristic ${characteristic}:`, decodedData);
+    // console.log('수신된 원시 데이터 : ', value);
+    // const asciiResult: string = convertToAscii2(data.value);
+    // console.log('asciiResult : ', asciiResult); // 변환된 ASCII 데이터 로그
+    // const parsedData = parseData(asciiResult);
+    // console.log('파싱된 데이터:', parsedData);
+    // console.log('data.value : ', data.value);
+    // const asciiResult: string = convertToAscii(data.value);
+    // console.log('asciiResult : ', asciiResult);
+    // const parts = asciiResult.split(', ');
+    // const irValue = parts[0].split(': ')[1];
+    // const redValue = parts[1].split(': ')[1];
+    // const tempValue = parts[2] && parts[2].split(': ')[1];
+    // const irNumber = parseInt(irValue);
+    // const redNumber = parseInt(redValue);
+    // const tempNumber = parseInt(tempValue);
+
+    // console.log('irNumber : ', irNumber);
+    // console.log('redNumber : ', redNumber);
+    // console.log('tempNumber : ', tempNumber);
+    // setIr(irNumber);
+    // setRed(redNumber);
+    // setTemp(tempNumber);
+    // setDataStorage(prevData => [
+    //   ...prevData,
+    //   {
+    //     time: checkCurrentTime().toLocaleString(),
+    //     ir: irNumber,
+    //     red: redNumber,
+    //     temp: tempNumber,
+    //   },
+    // ]);
   };
-  // const sendObject = async () => {
-  //   // const apiUrl = 'http://10.0.2.2:8001/object';
-  //   // const apiUrl = 'http://localhost:8001/object';
-  //   // const apiUrl = 'http://27.96.128.206:8001/object';
-  //   const apiUrl = 'http://115.85.183.166:8001/objectRaw';
-  //   try {
-  //     const response = await axios.post(apiUrl, dataStorage);
-  //     console.log('Data sent successfully');
-  //     if (response.status === 200) {
-  //       Alert.alert('Success Message', 'send success');
-  //       setDataStorage([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error sending data:', error);
-  //     if (error.response) {
-  //       // 서버로부터 응답을 받았으나, 응답 코드가 2xx가 아닌 경우
-  //       Alert.alert(
-  //         'Error',
-  //         `Server responded with status ${error.response.status}`,
-  //       );
-  //     } else if (error.request) {
-  //       // 요청을 보냈지만 응답을 받지 못한 경우
-  //       Alert.alert('Error', 'No response received from the server');
-  //     } else {
-  //       // 오류를 발생시킨 요청 자체에 문제가 있는 경우
-  //       Alert.alert('Error', 'Request failed:', error.message);
-  //     }
-  //   }
-  // };
+  const sendObject = async () => {
+    // const apiUrl = 'http://10.0.2.2:8001/object';
+    // const apiUrl = 'http://localhost:8001/object';
+    // const apiUrl = 'http://27.96.128.206:8001/object';
+    const apiUrl = 'http://115.85.183.166:8001/objectRaw';
+    try {
+      const response = await axios.post(apiUrl, dataStorage);
+      console.log('Data sent successfully');
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send success');
+        setDataStorage([]);
+      }
+    } catch (error) {
+      console.error('Error sending data:', error);
+      if (error.response) {
+        // 서버로부터 응답을 받았으나, 응답 코드가 2xx가 아닌 경우
+        Alert.alert(
+          'Error',
+          `Server responded with status ${error.response.status}`,
+        );
+      } else if (error.request) {
+        // 요청을 보냈지만 응답을 받지 못한 경우
+        Alert.alert('Error', 'No response received from the server');
+      } else {
+        // 오류를 발생시킨 요청 자체에 문제가 있는 경우
+        Alert.alert('Error', 'Request failed:', error.message);
+      }
+    }
+  };
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
     // if (peripheral.name === targetDeviceName) {
@@ -620,15 +605,19 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
               source={require('../assets/images/device_icon.png')}
               style={styles.icon}
             />
-            <Text style={styles.peripheral_name}>{item.id}</Text>
-            {/* <Image
+            {/* <Text style={styles.peripheralName}>{targetDeviceName}</Text> */}
+            <Text style={styles.peripheralName}>{item.id}</Text>
+            <Image
               source={
-                ir === 0
+                ir === ''
                   ? require('../assets/images/connecting_img1.png')
                   : require('../assets/images/connecting_img2.png')
               }
               style={styles.connecting}
-            /> */}
+            />
+            {/* <Text style={styles.state}>
+    {rawDatas === '' ? '연결 안 됨' : '연결됨'}
+  </Text> */}
           </View>
         </TouchableHighlight>
       );
@@ -674,52 +663,107 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
   };
   // const {data} = route ? route.params : null;
 
-  // const handleConnectBle = () => {
-  //   navigation.navigate('ConnectBle');
-  // };
-
-  useEffect(() => {
-    const { width, height } = Dimensions.get('window');
-    setOrientation(width < height ? 'PORTRAIT' : 'LANDSCAPE');
-
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setOrientation(window.width < window.height ? 'PORTRAIT' : 'LANDSCAPE');
-    });
-
-    return () => subscription.remove();
-  }, []);
-
-  const handleChartTouch = () => {
-    if (orientation === 'LANDSCAPE') {
-      setShowControls(true);
-      // 3초 후에 컨트롤을 다시 숨김
-      setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
-  };
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    // 여기에 실제 재생/정지 로직 구현
-    console.log(isPlaying ? 'Pausing...' : 'Playing...');
-  };
   return (
     <>
-    {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
+      <View style={styles.container}>
+        {/* <Text style={styles.title}>{data.title}</Text> */}
+        {/* <View style={styles.img_box}>
+          <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
+            {isScanning ? (
+              <Image
+                source={require('../assets/images/bleConnect_img.png')}
+                style={styles.ble_img}
+              />
+            ) : (
+              <Image
+                source={require('../assets/images/bleStart_img.png')}
+                style={styles.ble_img}
+              />
+            )}
+          </TouchableOpacity>
 
-    <ScrollView style={styles.container}>
-      {/* <DashboardInfo screen={orientation} pet={selectedPet}/> */}
-      <DashboardChart screen={orientation}/>
-      <DashboardData screen={orientation} data={{
-        hrData : hrData,
-        spo2Data : spo2Data,
-        tempData : tempData,  
-      }}/>
-   
-    </ScrollView>
-    {orientation === 'PORTRAIT' && <NavigationBar />}
- 
+          <Text style={styles.ble_text}>
+            Turn on the Bluetooth connection{'\n'}of the device.
+          </Text>
+        </View> */}
+        {/* <Text style={{...styles.title, marginTop: 20}}>Device list</Text> */}
+        <View style={styles.list_box}>
+          <FlatList
+            data={Array.from(peripherals.values())}
+            contentContainerStyle={{rowGap: 12}}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+          />
+        </View>
+
+        <SafeAreaView style={styles.body}>
+          <Pressable
+            style={styles.scanButton}
+            onPress={startScan}
+            android_ripple={{color: 'lightgray'}}>
+            <Text style={styles.scanButtonText}>
+              {isScanning ? '탐색중...' : '주변 기기 탐색'}
+            </Text>
+          </Pressable>
+          {/* <View style={styles.input_box}>
+            <TextInput
+              placeholder="Factor(숫자)를 입력하세요"
+              placeholderTextColor={'white'}
+              onChangeText={text => setInputValue(text)}
+              value={inputValue}
+              keyboardType="numeric"
+              style={{...styles.inputText, color: 'white'}}
+            />
+            <Pressable
+              style={{...styles.scanButton, width: '25%'}}
+              // onPress={handleSendData}
+              onPress={() => {
+                sendData(inputValue, connectedDeviceId);
+                setInputValue('');
+              }}
+              android_ripple={{color: 'lightgray'}}>
+              <Text style={styles.scanButtonText}>전송</Text>
+            </Pressable>
+          </View> */}
+          <SafeAreaView style={{...styles.body, marginTop: 20}}>
+            <Pressable style={styles.scanButton}>
+              <Text style={styles.scanButtonText}>HR : {hrData}</Text>
+            </Pressable>
+            <Pressable style={styles.scanButton}>
+              <Text style={styles.scanButtonText}>SPO2 : {spo2Data}</Text>
+            </Pressable>
+            <Pressable style={styles.scanButton}>
+              <Text style={styles.scanButtonText}>TEMP : {tempData}</Text>
+            </Pressable>
+          </SafeAreaView>
+          <Pressable
+            style={styles.scanButton}
+            // onPress={sendObject}
+            onPress={sendArray}
+            android_ripple={{color: 'lightgray'}}>
+            <Text style={styles.scanButtonText}>데이터 보내기</Text>
+          </Pressable>
+          {/* <Pressable
+            style={styles.scanButton}
+            onPress={() => {
+              navigation.navigate('Test');
+            }}
+            android_ripple={{color: 'lightgray'}}>
+            <Text style={styles.scanButtonText}>test server</Text>
+          </Pressable> */}
+          {/* <Pressable
+          style={styles.scanButton}
+          onPress={() => {
+            setRawDatas('');
+            console.log(rawDatas);
+          }}
+          android_ripple={{color: 'lightgray'}}>
+          <Text style={styles.scanButtonText}>
+            <Text style={styles.scanButtonText}>초기화</Text>
+          </Text>
+        </Pressable> */}
+        </SafeAreaView>
+      </View>
     </>
   );
 };
@@ -728,72 +772,9 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: 'auto',
-  },
-  ble_box: {
-    width: '100%',
-    height: 28,
     display: 'flex',
-    flexDirection: 'row',
+    padding: 0,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  ble_status: {
-    color: '#7b7b7b',
-    fontSize: 12,
-    fontWeight: '400',
-  },
-  ble_icon: {
-    width: 28,
-    height: 28,
-  },
-
-  basic_info: {
-    width: '100%',
-    height: 'auto',
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  basic_icon: {
-    width: 24,
-    height: 24,
-    marginRight: 4,
-  },
-  basic_text: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: "#262626"
-  },
-  article_box: {
-    width: '100%',
-    height: 52,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    marginBottom: 20,
-    position: 'relative',
-  },
-  icon_box: {
-    width: 105,
-    height: 24,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  detail: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: '#262626',
-    marginLeft: 'auto',
-  },
-  box_line: {
-    width: '100%',
-    height: 1,
-    backgroundColor: '#F5B75C',
   },
   title: {
     width: '100%',
@@ -826,8 +807,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
   },
+  // -------------------------------------
   btn_box: {
     paddingTop: 13,
+    // backgroundColor: 'white',
   },
   back_btn: {
     fontSize: 12,
@@ -836,10 +819,12 @@ const styles = StyleSheet.create({
     marginLeft: 31,
   },
   body: {
+    // backgroundColor: 'white',
     alignItems: 'center',
   },
-  scan_button: {
+  scanButton: {
     width: 207,
+    // width: '100%',
     height: 41,
     alignItems: 'center',
     justifyContent: 'center',
@@ -854,7 +839,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  scan_button_text: {
+  scanButtonText: {
     fontSize: 20,
     color: 'white',
   },
@@ -870,6 +855,7 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     marginBottom: 0,
   },
+
   row: {
     width: windowWidth * 0.8,
     height: 47,
@@ -878,6 +864,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 4,
     paddingRight: 14,
+    // elevation: 2,
+    // backgroundColor: 'gray',
+    // borderRadius: 6,
+    // shadowColor: '#000000',
+    // shadowOffset: {width: 1, height: 1},
+    // shadowOpacity: 0.8,
+    // shadowRadius: 8,
+    // opacity: 0.25,
   },
   touch_box: {
     height: 47,
@@ -888,7 +882,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
   },
-  peripheral_name: {
+  peripheralName: {
     width: windowWidth * 0.55,
     marginLeft: 5,
     fontSize: 16,
@@ -902,48 +896,17 @@ const styles = StyleSheet.create({
   state: {
     fontSize: 16,
     fontWeight: 'bold',
+    // color: '#ADADAD',
     color: 'white',
   },
-  input_text: {
+  inputText: {
     width: '70%',
     height: 41,
     marginTop: 22,
     borderWidth: 1,
     borderColor: '#12B6D1',
     paddingLeft: 20,
-  },
-  chart_container: {
-    width: '100%',
-    height: 300,
-    marginVertical: 20,
-  },
-  split_chart_container: {
-    flexDirection: 'row',
-    width: '100%',
-    height: '100%',
-  },
-  half_chart: {
-    flex: 1,
-    height: '100%',
-  },
-  play_pause_button: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  play_pause_button_text: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
+    // textAlign: 'center',
   },
 });
-export default Dashboard;
+export default ConnectBleComponentRaw;

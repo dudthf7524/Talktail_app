@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Login from './Component/logIn';
 import { BLEProvider } from './Component/BLEContext';
+import Login from './Component/logIn';
 import SignUp from './Component/sign';
 import Dashboard from './Component/dashboard';
 import DetailTemp from './Component/detailTemp';
@@ -12,7 +12,8 @@ import RegisterPet from './Component/registerPet';
 import PetLists from './Component/petLists';
 import ConnectBle from './Component/connectBle';
 import EditPet from './Component/editPet';
-import ConnetcBleIos from './Component/connetcBleIos';
+import DownloadData from './Component/downloadData';
+import Record from './Component/record';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,7 +22,7 @@ const App = () => {
     <BLEProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="ConnetcBleIos"
+          initialRouteName="Login"
           screenOptions={{
             headerShown: false,
             contentStyle: {
@@ -39,8 +40,8 @@ const App = () => {
           <Stack.Screen name="PetLists" component={PetLists} />
           <Stack.Screen name="ConnectBle" component={ConnectBle} />
           <Stack.Screen name="EditPet" component={EditPet} />
-          <Stack.Screen name="ConnetcBleIos" component={ConnetcBleIos} />
-
+          <Stack.Screen name="DownloadData" component={DownloadData} />
+          <Stack.Screen name="Record" component={Record} />
         </Stack.Navigator>
       </NavigationContainer>
     </BLEProvider>

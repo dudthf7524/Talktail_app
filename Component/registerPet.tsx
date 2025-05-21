@@ -13,8 +13,7 @@ import {
 } from 'react-native';
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import SelectDropdown from 'react-native-select-dropdown';
-import { usePetStore } from '../store/useStore';
+import { userStore } from '../store/userStore';
 import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
 
@@ -29,7 +28,7 @@ type PetData = {
 
 const RegisterPet = ({ navigation }) => {
   const [errors, setErrors] = useState<FormErrors>({});
-  const { registerPet, registerLoading, fetchPets } = usePetStore();
+  const { registerPet, registerLoading, fetchPets } = userStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
     name: '',

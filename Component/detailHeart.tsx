@@ -1,52 +1,94 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
+import { useBLE } from './BLEContext';
 
 type IRDataPoint = {
   timestamp: number;
   value: number;
 };
 
-const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
+const DetailHeart = ({ screen }: { screen: string }) => {
+  const { state } = useBLE();
+  const { chartData } = state;
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
+
   const screenWidth = Dimensions.get('window').width;
-  const pointsPerView = 50; // 한 화면에 보여질 데이터 포인트 수를 50개로 변경
-  const pointWidth = screenWidth / pointsPerView; // 각 포인트의 너비를 화면 너비에 맞게 계산
+  const pointsPerView = 50;
+  const pointWidth = screenWidth / pointsPerView;
   const chartWidth = Math.max(screenWidth, pointsPerView * pointWidth);
   const chartHeight = 200;
-  const padding = 0; // 좌우 패딩 제거
-  const graphHeight = chartHeight - 40; // 상하 여백 유지
+  const padding = 40; // Y축 레이블을 위한 패딩 추가
+  const graphHeight = chartHeight - padding;
 
-  // 초당 50개의 데이터 추가
+  // Y축 범위 계산
+  const getYAxisRange = () => {
+    try {
+      if (!data || data.length === 0) {
+        return { min: 0, max: 20000 };
+      }
+
+      const values = data
+        .map(point => point.value)
+        .filter(value => typeof value === 'number' && !isNaN(value) && isFinite(value));
+
+      if (values.length === 0) {
+        return { min: 0, max: 20000 };
+      }
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      
+      // 최소값과 최대값이 같은 경우 처리
+      if (min === max) {
+        return { min: Math.max(0, min - 1000), max: max + 1000 };
+      }
+
+      const padding = (max - min) * 0.1; // 10% 패딩
+      return {
+        min: Math.max(0, min - padding),
+        max: max + padding
+      };
+    } catch (error) {
+      console.error('Error in getYAxisRange:', error);
+      return { min: 0, max: 20000 };
+    }
+  };
+
+  // BLE 데이터를 그래프 데이터로 변환
   useEffect(() => {
-    if (!isAutoScrolling) return; // 자동 스크롤이 비활성화된 경우 데이터 업데이트 중지
+    try {
+      if (!isAutoScrolling || !chartData || !Array.isArray(chartData) || chartData.length === 0) return;
 
-    const interval = setInterval(() => {
-      // 50개의 새로운 데이터 포인트 생성
-      const newDataPoints: IRDataPoint[] = Array.from({ length: 50 }, (_, i) => ({
-        timestamp: Date.now() + i * 20, // 20ms 간격
-        value: Math.random() * 20000 + 100000 // 100000 ~ 120000 사이의 랜덤값
-      }));
+      // 데이터 포인트 수를 줄임 (모든 포인트를 사용하지 않고 일부만 사용)
+      const step = Math.max(1, Math.floor(chartData.length / 50));
+      const newDataPoints: IRDataPoint[] = chartData
+        .filter((_, index) => index % step === 0) // 데이터 포인트 샘플링
+        .filter(value => typeof value === 'number' && !isNaN(value) && isFinite(value))
+        .map((value, index) => ({
+          timestamp: Date.now() + index * 20,
+          value: value
+        }));
 
       setData(prevData => {
         const updatedData = [...prevData, ...newDataPoints];
-        // 최대 1000개의 데이터 포인트만 유지
-        return updatedData.slice(-1000);
+        // 최대 50개의 데이터 포인트만 유지
+        return updatedData.slice(-50);
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Error processing BLE data:', error);
+    }
+  }, [chartData, isAutoScrolling]);
 
-    return () => clearInterval(interval);
-  }, [isAutoScrolling]); // isAutoScrolling을 의존성으로 추가
-
-  // 자동 스크롤 효과
+  // 자동 스크롤 효과 - 애니메이션 제거
   useEffect(() => {
     if (!isAutoScrolling) return;
 
     const scrollInterval = setInterval(() => {
       if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true });
+        scrollViewRef.current.scrollToEnd({ animated: false }); // 애니메이션 비활성화
       }
     }, 100);
 
@@ -54,25 +96,63 @@ const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
   }, [isAutoScrolling]);
 
   // Y축 레이블 생성
-  const yLabels = ['120000', '115000', '110000', '105000', '100000'];
+  const getYLabels = () => {
+    try {
+      const { min, max } = getYAxisRange();
+      const range = max - min;
+      if (range <= 0) return ['0', '5000', '10000', '15000', '20000'];
 
-  // SVG Path 생성
-  const createPath = () => {
-    if (data.length === 0) return '';
-    
-    const points = data.map((item, index) => {
-      const x = index * pointWidth; // 각 포인트의 x 좌표를 pointWidth 간격으로 설정
-      const y = chartHeight - padding - ((item.value - 100000) / 20000) * graphHeight;
-      return `${x},${y}`;
-    });
-    return `M ${points.join(' L ')}`;
+      const step = range / 4;
+      return Array.from({ length: 5 }, (_, i) => 
+        Math.round(min + step * i).toString()
+      ).reverse();
+    } catch (error) {
+      console.error('Error generating Y labels:', error);
+      return ['0', '5000', '10000', '15000', '20000'];
+    }
   };
+
+  // SVG Path 생성 - 최적화
+  const createPath = () => {
+    try {
+      if (!data || data.length === 0) return '';
+      
+      const { min, max } = getYAxisRange();
+      const range = max - min;
+      
+      if (range <= 0) return '';
+
+      // 데이터 포인트 수를 줄임 (모든 포인트를 사용하지 않고 일부만 사용)
+      const step = Math.max(1, Math.floor(data.length / 50));
+      const points = data
+        .filter((_, index) => index % step === 0) // 데이터 포인트 샘플링
+        .filter(point => typeof point.value === 'number' && !isNaN(point.value) && isFinite(point.value))
+        .map((item, index) => {
+          const x = index * pointWidth * step + padding;
+          const y = chartHeight - padding - ((item.value - min) / range) * graphHeight;
+          return `${x},${y}`;
+        });
+
+      return points.length > 0 ? `M ${points.join(' L ')}` : '';
+    } catch (error) {
+      console.error('Error creating path:', error);
+      return '';
+    }
+  };
+
+  const yLabels = getYLabels();
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.chart_container}>
         <View style={styles.chart_wrapper}>
-          {/* 그래프 영역 */}
+          <View style={styles.yAxisLabels}>
+            {yLabels.map((label, index) => (
+              <Text key={index} style={styles.yAxisLabel}>
+                {label}
+              </Text>
+            ))}
+          </View>
           <ScrollView 
             ref={scrollViewRef}
             horizontal 
@@ -86,7 +166,7 @@ const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
                   key={index}
                   x1={padding}
                   y1={padding + (graphHeight * index) / 4}
-                  x2={chartWidth - padding}
+                  x2={chartWidth}
                   y2={padding + (graphHeight * index) / 4}
                   stroke="#E0E0E0"
                   strokeWidth="1"
@@ -145,9 +225,23 @@ const styles = StyleSheet.create({
   chart_wrapper: {
     flexDirection: 'row',
     height: 200,
+    alignItems: 'center',
   },
   graphContainer: {
     flex: 1,
+  },
+  yAxisLabels: {
+    width: 50,
+    height: '100%',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    marginRight: 5,
+  },
+  yAxisLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'right',
+    paddingRight: 5,
   },
   playButton: {
     backgroundColor: '#F5B75C',

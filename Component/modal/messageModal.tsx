@@ -24,7 +24,7 @@ const MessageModal: React.FC<MessageModalProps> = ({
     if (visible) {
       const timer = setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 1500);
 
       return () => clearTimeout(timer);
     }

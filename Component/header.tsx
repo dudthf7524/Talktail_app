@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, SafeAreaView } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const navigation = useNavigation<NavigationProp<any>>();
 
   return (
+    <SafeAreaView>
     <View style={styles.header}>
       <Pressable 
         style={({ pressed }) => [
@@ -25,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       </Pressable>
       <Text style={styles.title}>{title}</Text> 
     </View>
+    </SafeAreaView>
   );
 };
 

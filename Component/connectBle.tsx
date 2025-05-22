@@ -17,6 +17,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import BleManager from 'react-native-ble-manager';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import MessageModal from './modal/messageModal';
+import AlertModal from "./modal/alertModal";
 import { Buffer } from 'buffer';
 import { useBLE } from './BLEContext';
 import dayjs from 'dayjs';
@@ -53,32 +54,13 @@ type Props = {
 };
 
 const BleManagerModule = NativeModules.BleManager;
-
-if (!BleManagerModule.addListener) {
-  BleManagerModule.addListener = () => {};
-};
-if (!BleManagerModule.removeListeners) {
-  BleManagerModule.removeListeners = () => {};
-};
-
-// 이벤트 emitter 생성
-const bleManagerEmitter2= new NativeEventEmitter(BleManagerModule);
-const bleManagerEmitter = bleManagerEmitter2._nativeModule;
-console.log('aaaa');
-console.log(BleManagerModule)
-console.log('aaaa');
-
-// await BleManager.start({ showAlert: false });
-// console.log('✅ BLE Manager initialized');
-// const bleManagerEmitter = new NativeEventEmitter();
-console.log("bleManagerEmitter  :" ,bleManagerEmitter);
-console.log('cccc')
+const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
 const SERVICE_UUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
 const CHARACTERISTIC_UUID_RX = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
 
 const ConnectBle = ({ route }: Props) => {
-
+  
   const { selectedPet } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { dispatch, addChartData, collectData } = useBLE();
@@ -87,112 +69,41 @@ const ConnectBle = ({ route }: Props) => {
   const [isConnected, setIsConnected] = useState(false);
   const [peripherals, setPeripherals] = useState(new Map());
   const [openMessageModal, setOpenMessageModal] = useState(false);
+  const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [dataBuffer, setDataBuffer] = useState<number[]>([]);
 
-
-  // async function checkBluetoothPermissions() {
-  //   if (Platform.OS === 'android') {
-  //     try {
-  //       const granted = await PermissionsAndroid.check(
-  //         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-  //       );
-  //       console.log('ACCESS_FINE_LOCATION 권한 허용 여부:', granted);
-
-  //       // Android 12 이상부터 필요한 권한
-  //       const scanGranted = await PermissionsAndroid.check(
-  //         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-  //       );
-  //       console.log('BLUETOOTH_SCAN 권한 허용 여부:', scanGranted);
-
-  //       const connectGranted = await PermissionsAndroid.check(
-  //         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-  //       );
-  //       console.log('BLUETOOTH_CONNECT 권한 허용 여부:', connectGranted);
-
-  //       return granted && scanGranted && connectGranted;
-  //     } catch (err) {
-  //       console.warn(err);
-  //       return false;
-  //     }
-  //   } else {
-  //     // iOS는 별도 권한 체크 필요 없거나 Info.plist 설정 필요
-  //     return true;
-  //   }
-  // }
-
-  async function checkBluetoothPermissions() {
-    if (Platform.OS === 'android' && Platform.Version >= 31) {
-      try {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        ]);
-
-        const allGranted = Object.values(granted).every(result => result === PermissionsAndroid.RESULTS.GRANTED);
-
-        if (allGranted) {
-          console.log('✅ 모든 BLE 권한이 허용되었습니다.');
-        } else {
-          console.warn('⚠️ BLE 권한 중 일부가 거부되었습니다.', granted);
-        }
-      } catch (error) {
-        console.error('권한 요청 오류:', error);
-      }
-    } else {
-      // Android 10 이하 대응
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('✅ 위치 권한 허용됨');
-      } else {
-        console.warn('❌ 위치 권한 거부됨');
-      }
-    }
-  };
-
   useEffect(() => {
-    const init = async () => {
-      try {
-        // 1. BLE 권한 요청 및 초기화
-        await checkBluetoothPermissions();
+    // BLE 초기화
+    BleManager.start({ showAlert: false })
+      .then(() => {
+        console.log('BLE Manager initialized');
+      })
+      .catch((error) => {
+        console.error('BLE Manager initialization error:', error);
+      });
 
-        await BleManager.start({ showAlert: false });
-        console.log('✅ BLE Manager initialized');
+    // 이벤트 리스너 등록
+    const listeners = [
+      bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral),
+      bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan),
+      bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleUpdateValueForCharacteristic),
+      bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectPeripheral),
+    ];
 
-        // 2. 이벤트 리스너 등록
-        bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
-        bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan);
-        bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleUpdateValueForCharacteristic);
-        bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectPeripheral);
-
-        console.log('✅ BLE 이벤트 리스너 등록 완료');
-      } catch (error) {
-        console.error('❌ BLE 초기화 실패:', error);
-      }
-    };
-
-    init(); // 실행
-
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
     return () => {
-      bleManagerEmitter.removeAllListeners('BleManagerDiscoverPeripheral');
-      bleManagerEmitter.removeAllListeners('BleManagerStopScan');
-      bleManagerEmitter.removeAllListeners('BleManagerDidUpdateValueForCharacteristic');
-      bleManagerEmitter.removeAllListeners('BleManagerDisconnectPeripheral');
-
+      listeners.forEach(listener => listener.remove());
       if (selectedDevice) {
         BleManager.disconnect(selectedDevice);
       }
     };
   }, []);
 
-
   const handleDiscoverPeripheral = (peripheral) => {
-    console.log('Discovered peripheral:', peripheral.name);
+    // console.log('Discovered peripheral:', peripheral);
     if (peripheral.name === 'Zephy46') {
       setPeripherals(map => new Map(map.set(peripheral.id, {
         ...peripheral,
@@ -226,7 +137,7 @@ const ConnectBle = ({ route }: Props) => {
       setIsConnected(false);
       setIsSubscribed(false);
       setSelectedDevice(null);
-
+      
       console.log('Starting scan...');
       BleManager.scan([], 10, true)
         .then(() => {
@@ -243,13 +154,12 @@ const ConnectBle = ({ route }: Props) => {
   };
 
   const handleAndroidPermissions = async () => {
-    console.log(Platform.OS)
     if (Platform.OS === 'android' && Platform.Version >= 31) {
       const result = await PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       ]);
-
+      
       if (result) {
         console.log('Android 12+ permissions granted');
       } else {
@@ -265,7 +175,7 @@ const ConnectBle = ({ route }: Props) => {
       const result = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
-
+      
       if (result) {
         console.log('Android <12 permissions granted');
       } else {
@@ -283,10 +193,10 @@ const ConnectBle = ({ route }: Props) => {
   const handleDeviceSelect = async (deviceId: string) => {
     try {
       await BleManager.connect(deviceId);
-
+      
       // 연결 상태 업데이트
       setIsConnected(true);
-      dispatch({ type: 'CONNECT_DEVICE', payload: { startDate: dayjs().format('YYYYMMDD'), startTime: dayjs().format('HHmmss'), deviceCode: selectedPet.device_code, petCode: selectedPet.pet_code } })
+      dispatch({type: 'CONNECT_DEVICE', payload: {startDate: dayjs().format('YYYYMMDD'), startTime: dayjs().format('HHmmss'), deviceCode: selectedPet.device_code, petCode: selectedPet.pet_code}})
 
       // peripherals 맵 업데이트
       setPeripherals(prevPeripherals => {
@@ -331,7 +241,7 @@ const ConnectBle = ({ route }: Props) => {
   const handleUpdateValueForCharacteristic = (data: any) => {
     const value = data.value;
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
-
+    
     const numbers = decodedValue.split(',').map(num => {
       const parsed = parseInt(num.trim());
       return isNaN(parsed) ? 0 : parsed;
@@ -347,7 +257,7 @@ const ConnectBle = ({ route }: Props) => {
     setIsConnected(false);
     setIsSubscribed(false);
     setSelectedDevice(null);
-
+    
     // peripherals 맵 업데이트
     setPeripherals(map => {
       const newMap = new Map(map);
@@ -400,7 +310,7 @@ const ConnectBle = ({ route }: Props) => {
 
         await BleManager.disconnect(selectedDevice);
         console.log('Disconnected from device:', selectedDevice);
-
+        
         // 연결 해제 시 상태 업데이트
         setPeripherals(map => {
           const newMap = new Map(map);
@@ -419,11 +329,15 @@ const ConnectBle = ({ route }: Props) => {
   };
 
   const handleMonitoring = () => {
-    navigation.navigate('Dashboard', {
-      selectedPet,
-    });
-    // navigation.navigate('Dashboard');
-
+    if(!isConnected) {
+      setOpenAlertModal(true);
+    } else {
+      navigation.navigate('Dashboard', {
+        selectedPet,
+      });
+    }
+      // navigation.navigate('Dashboard');
+    
   };
 
   return (
@@ -431,7 +345,7 @@ const ConnectBle = ({ route }: Props) => {
       <Header title="블루투스 연결" />
       <SafeAreaView style={styles.container}>
         <View style={styles.monitorBox}>
-          <ScrollView
+          <ScrollView 
             style={styles.deviceList}
             contentContainerStyle={styles.deviceListContent}
           >
@@ -476,6 +390,15 @@ const ConnectBle = ({ route }: Props) => {
         >
           <Text style={styles.buttonText}>모니터링 하기</Text>
         </Pressable>
+        {/* <Pressable
+          style={({ pressed }) => [
+            styles.monitoringButton,
+            pressed && styles.pressedButton
+          ]}
+          onPress={handleMonitoring}
+        >
+          <Text style={styles.buttonText}>{isConnected ? '연결 중' : '연결 안중'}</Text>
+        </Pressable> */}
       </SafeAreaView>
       <NavigationBar />
       <MessageModal
@@ -483,6 +406,12 @@ const ConnectBle = ({ route }: Props) => {
         title={modalContent.title}
         content={modalContent.content}
         onClose={() => setOpenMessageModal(false)}
+      />  
+      <AlertModal
+        visible={openAlertModal}
+        title="연결 오류"
+        content="디바이스와의 연결을 확인해주세요."
+        onClose={() => setOpenAlertModal(false)}
       />
     </>
   );

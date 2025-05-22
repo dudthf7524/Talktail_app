@@ -37,6 +37,8 @@ type FormErrors = {
 };
 
 const Login = ({ navigation }: { navigation: NavigationProp }) => {
+
+  console.log(API_URL)
   const [formData, setFormData] = useState<FormData>({
     id: '',
     password: '',

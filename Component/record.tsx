@@ -19,6 +19,7 @@ const Record = () => {
   const [selectedPet, setSelectedPet] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState('');
   const { loadData } = dataStore();
   useEffect(() => {
     fetchPets();
@@ -85,6 +86,7 @@ const Record = () => {
                 data={nameLists}
                 onSelect={(selectedItem) => {
                   setSelectedPet(selectedItem.value);
+                  setSelectedLabel(selectedItem.label);
                 }}
                 defaultButtonText="펫을 선택하세요"
                 buttonTextAfterSelection={(selectedItem) => selectedItem.label}
@@ -99,14 +101,15 @@ const Record = () => {
           </View>
         </View>
       </SafeAreaView>
-      <RecordLists selectedDate={formSendDate(selectedDate)} selectedPetCode={selectedPet}/>
+      <RecordLists selectedDate={formSendDate(selectedDate)} selectedPetCode={selectedPet} label={selectedLabel}/>
     </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '100%',
+    height: 'auto',
     backgroundColor: '#FFFFFF',
   },
   header: {

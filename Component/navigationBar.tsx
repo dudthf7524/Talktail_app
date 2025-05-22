@@ -18,16 +18,23 @@ const NavigationBar: React.FC = () => {
     <View style={styles.container}>
       <Pressable 
         style={styles.button}
-        onPress={() => navigation.navigate('Dashboard')}
+        onPress={() => navigation.push('PetLists')}
       >
-        <Text style={styles.buttonText}>개목록</Text>
+        <Text style={styles.buttonText}>반려동물목록</Text>
       </Pressable>
       <Pressable 
         style={styles.button}
-        onPress={() => navigation.navigate('Record')}
+        onPress={() => navigation.push('Record')}
       >
         <Text style={styles.buttonText}>데이터목록</Text>
       </Pressable>
+      <Pressable 
+        style={styles.button}
+        onPress={() => navigation.push('Mypage')}
+      >
+        <Text style={styles.buttonText}>마이페이지</Text>
+      </Pressable>
+     
       {/* <Pressable 
         style={styles.button}
         onPress={() => navigation.navigate('PetList')}

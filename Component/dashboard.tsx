@@ -1,34 +1,19 @@
 import React, {useState, useEffect} from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   View,
   Text,
-  StatusBar,
   NativeModules,
   NativeEventEmitter,
   Platform,
   PermissionsAndroid,
-  FlatList,
-  TouchableHighlight,
-  Pressable,
   Dimensions,
-  TouchableOpacity,
-  TextInput,
-  Image,
   ScrollView,
-  Alert,
-  ScaledSize,
 } from 'react-native';
-import axios from 'axios';
-import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {Buffer} from 'buffer';
-import dayjs from 'dayjs';
+import { RouteProp} from '@react-navigation/native';
 import Header from "./header"
 import NavigationBar from './navigationBar';
-import DetailHeart from './detailHeart';
-import DetailTemp from './detailTemp';
+
 import DashboardInfo from './dashboardInfo';
 import DashboardChart from './dashboardChart';
 import DashboardData from './dashboardData';
@@ -53,36 +38,14 @@ type RootStackParamList = {
 };
 
 type DashboardScreenRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
-const SECONDS_TO_SCAN_FOR = 7;
-const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
-const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const characteristicUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
-// const CHARACTERISTIC_UUID_RX = '2A37';
-const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-const targetDeviceName = 'Zephy';
-const ALLOW_DUPLICATES = true;
-const convertToAscii = (numbers: number[]): string => {
-  const asciiChars: string[] = numbers.map(number =>
-    String.fromCharCode(number),
-  );
-  const asciiString: string = asciiChars.join('');
-  return asciiString;
-};
 import BleManager, {
   BleDisconnectPeripheralEvent,
-  BleManagerDidUpdateValueForCharacteristicEvent,
-  BleScanCallbackType,
-  BleScanMatchMode,
-  BleScanMode,
+ 
   Peripheral,
 } from 'react-native-ble-manager';
-import HomeComponent from './home';
-import {parse} from 'react-native-svg';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
@@ -117,70 +80,20 @@ declare module 'react-native-ble-manager' {
 }
 
 const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
-  const navigation = useNavigation<NavigationProp>();
-  // const { selectedPet } = route.params;
-  // console.log('Dashboard 속 Selected Pet:', selectedPet);
+  const { selectedPet } = route.params;
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
   );
-  // const [rawDatas, setRawDatas] = useState(initialAsciiString);
-  const [rawDatas, setRawDatas] = useState('');
-  const [inputValue, setInputValue] = useState('');
-  const [connectedDeviceId, setConnectedDeviceId] = useState('');
-  const [factor, setFactor] = useState(0);
-  const [PPG, setPPG] = useState(0);
-  const [cnt, setCnt] = useState(0);
-  const [pulse, setPulse] = useState(0);
-
-  const [ir, setIr] = useState(0);
-  const [red, setRed] = useState(0);
-  const [temp, setTemp] = useState(0);
-
-  const [irData, setIrData] = useState(0);
-  const [redData, setRedData] = useState(0);
   const [hrData, setHrData] = useState(0);
   const [spo2Data, setSpo2Data] = useState(0);
   const [tempData, setTempData] = useState(0);
-
   const [orientation, setOrientation] = useState('PORTRAIT');
-
-  const [showControls, setShowControls] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  // <HomeComponent bleData={rawDatas} />;
 
   peripherals.get;
 
   const addOrUpdatePeripheral = (id: string, updatedPeripheral: Peripheral) => {
-    // new Map() enables changing the reference & refreshing UI.
-    // TOFIX not efficient.
     setPeripherals(map => new Map(map.set(id, updatedPeripheral)));
-  };
-
-  const startScan = () => {
-    if (!isScanning) {
-      // reset found peripherals before scan
-      setPeripherals(new Map<Peripheral['id'], Peripheral>());
-      try {
-        console.debug('[startScan] starting scan...');
-        setIsScanning(true);
-        // BleManager.scan(SERVICE_UUIDS, SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
-        BleManager.scan([], SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
-          matchMode: BleScanMatchMode.Sticky,
-          scanMode: BleScanMode.LowLatency,
-          callbackType: BleScanCallbackType.AllMatches,
-        })
-          .then(() => {
-            console.debug('[startScan] scan promise returned successfully.');
-          })
-          .catch(err => {
-            console.error('[startScan] ble scan returned in error', err);
-          });
-      } catch (error) {
-        console.error('[startScan] ble scan error thrown', error);
-      }
-    }
   };
 
   const handleStopScan = () => {
@@ -202,297 +115,18 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
     console.debug(
       `[handleDisconnectedPeripheral][${event.peripheral}] disconnected.`,
     );
-    // setRawDatas(0);
   };
-  const [currentTime, setCurrentTime] = useState('');
-  // const formatDateTime = (date: Date): string => {
-  //   const updatedDate = new Date(date);
-  //   const options = {
-  //     year: 'numeric',
-  //     month: '2-digit',
-  //     day: '2-digit',
-  //     hour: '2-digit',
-  //     minute: '2-digit',
-  //     second: '2-digit',
-  //     hour12: false,
-  //   };
-
-  //   return updatedDate.toLocaleString('ko-KR', options);
-  // };
-  // const checkCurrentTime = () => {
-  //   const formattedTime = formatDateTime(new Date());
-  //   return formattedTime;
-  // };
-  const [dataStorage, setDataStorage] = useState<
-    {time: string; ir: number; red: number}[]
-  >([]);
-
-  // sendDatas 상태 타입 정의 및 초기화 주석 처리
-  // interface SensorData {
-  //   red: number | null;
-  //   ir: number | null;
-  //   SpO2: number | null;
-  //   HR: number | null;
-  //   TEMP: number | null;
-  //   time: string | null;
-  // }
-
-  // const [sendDatas, setSendDatas] = useState<SensorData[]>([]);
-
-  const parseData = (
-    input: string,
-  ): {
-    time: string | null;
-    red: number | null;
-    ir: number | null;
-    SpO2: number | null;
-    HR: number | null;
-    TEMP: number | null;
-  } => {
-    // 초기 객체 생성, TEMP 필드를 null로 설정
-    let data = {
-      time: null as string | null,
-      red: null as number | null,
-      ir: null as number | null,
-      SpO2: null as number | null,
-      HR: null as number | null,
-      TEMP: null as number | null,
-    };
-
-    // 문자열에서 'TEMP'가 있는지 확인
-    const hasTemp = input.includes('TEMP');
-
-    // 정규 표현식으로 숫자 값 추출
-    const regex =
-      /time\s*:\s*(\d+),\s*red\s*:\s*(\d+),\s*ir\s*:\s*(\d+),\s*SpO2\s*:\s*(-?\d+),\s*HR\s*:\s*(\d+)(?:,\s*TEMP\s*:\s*([\d.]+))?/;
-    const match = input.match(regex);
-
-    if (match) {
-      // data.time = parseInt(match[1]);
-      data.time = dayjs().format('MMDD-HH:mm:ss');
-      data.red = parseInt(match[2]);
-      data.ir = parseInt(match[3]);
-      data.SpO2 = parseInt(match[4]);
-      data.HR = parseInt(match[5]);
-      // console.log('data.time : ', data.time);
-      // console.log('data.red : ', data.red);
-      // console.log('data.ir : ', data.ir);
-      // console.log('data.SpO2 : ', data.SpO2);
-      // console.log('data.HR : ', data.HR);
-      setIrData(data.ir);
-      setRedData(data.red);
-      setHrData(data.HR);
-      setSpo2Data(data.SpO2);
-      // TEMP가 있으면 TEMP 필드에 값을 설정, 없으면 null 유지
-      if (hasTemp) {
-        data.TEMP = parseFloat(match[6]);
-        setTempData(data.TEMP);
-      }
-
-      // sendDatas 상태 타입 정의 및 초기화 주석 처리
-      // setSendDatas(prevData => [
-      //   ...prevData,
-      //   {
-      //     red: data.red,
-      //     ir: data.ir,
-      //     SpO2: data.SpO2,
-      //     HR: data.HR,
-      //     TEMP: data.TEMP,
-      //     time: data.time,
-      //   },
-      // ]);
-    }
-
-    return data;
-  };
-
-  // const sendArray = async () => {
-  //   try {
-  //     // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
-
-  //     const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
-
-  //     // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
-
-  //     // const apiUrl = 'http://localhost:3000/receive/arrs';
-  //     // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
-  //     // const apiUrl = 'http://localhost:3000/receive/arrs';
-  //     // console.log('sended dataLists : ', dataLists);
-  //     const response = await axios.post(apiUrl, sendDatas);
-  //     if (response.status === 200) {
-  //       Alert.alert('Success Message', 'send datas');
-  //       setSendDatas([]);
-  //     }
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // };
-  // BLE 데이터 처리 부분 주석 처리
-  const handleUpdateValueForCharacteristic = (
-    data: BleManagerDidUpdateValueForCharacteristicEvent,
-  ) => {
-    // try {
-    //   const {value} = data;
-    //   if (!value) return;
-
-    //   // Base64 문자열로 변환
-    //   const base64String = Array.from(value)
-    //     .map(byte => String.fromCharCode(byte))
-    //     .join('');
-      
-    //   const decodedValue = Buffer.from(base64String, 'base64').toString('utf-8');
-    //   const parsedData = parseData(decodedValue);
-    //   console.log('Parsed Data: ', parsedData);
-    // } catch (error) {
-    //   console.error('Error processing BLE data:', error);
-    // }
-  };
-  // const sendObject = async () => {
-  //   // const apiUrl = 'http://10.0.2.2:8001/object';
-  //   // const apiUrl = 'http://localhost:8001/object';
-  //   // const apiUrl = 'http://27.96.128.206:8001/object';
-  //   const apiUrl = 'http://115.85.183.166:8001/objectRaw';
-  //   try {
-  //     const response = await axios.post(apiUrl, dataStorage);
-  //     console.log('Data sent successfully');
-  //     if (response.status === 200) {
-  //       Alert.alert('Success Message', 'send success');
-  //       setDataStorage([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error sending data:', error);
-  //     if (error.response) {
-  //       // 서버로부터 응답을 받았으나, 응답 코드가 2xx가 아닌 경우
-  //       Alert.alert(
-  //         'Error',
-  //         `Server responded with status ${error.response.status}`,
-  //       );
-  //     } else if (error.request) {
-  //       // 요청을 보냈지만 응답을 받지 못한 경우
-  //       Alert.alert('Error', 'No response received from the server');
-  //     } else {
-  //       // 오류를 발생시킨 요청 자체에 문제가 있는 경우
-  //       Alert.alert('Error', 'Request failed:', error.message);
-  //     }
-  //   }
-  // };
+ 
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
-    // if (peripheral.name === targetDeviceName) {
-    //   addOrUpdatePeripheral(peripheral.id, peripheral);
-    // }
     if (
       peripheral.name === 'Zephy45' ||
       peripheral.advertising.localName === 'Zephy45'
     ) {
-      // console.log('Zephy45 발견:', peripheral);
-      addOrUpdatePeripheral(peripheral.id, peripheral); // Zephy45만 추가
+      addOrUpdatePeripheral(peripheral.id, peripheral); 
     }
   };
 
-  const togglePeripheralConnection = async (peripheral: Peripheral) => {
-    if (peripheral && peripheral.connected) {
-      try {
-        // await BleManager.disconnect(peripheral.id);
-        console.log('연결되었습니다.');
-      } catch (error) {
-        console.error(
-          `[togglePeripheralConnection][${peripheral.id}] error when trying to disconnect device.`,
-          error,
-        );
-      }
-    } else {
-      await connectPeripheral(peripheral);
-      // await connectToDevice(peripheral);
-    }
-  };
-
-  const connectPeripheral = async (peripheral: Peripheral) => {
-    try {
-      if (peripheral) {
-        // console.log('peripheral : ', peripheral);
-        console.log('연결된 device의 peripheral.id : ', peripheral.id);
-        // console.log(
-        //   '연결된 device의 peripheral.id의 타입 : ',
-        //   typeof peripheral.id,
-        // );
-        addOrUpdatePeripheral(peripheral.id, {...peripheral, connecting: true});
-
-        await BleManager.connect(peripheral.id);
-        console.debug(`[connectPeripheral][${peripheral.id}] connected.`);
-
-        addOrUpdatePeripheral(peripheral.id, {
-          ...peripheral,
-          connecting: false,
-          connected: true,
-        });
-
-        await BleManager.checkState().then(state =>
-          console.log(`current BLE state = '${state}'.`),
-        );
-
-        // 서비스 및 characteristic 가져오기
-        const peripheralData = await BleManager.retrieveServices(peripheral.id);
-        console.debug(
-          `[connectPeripheral][${peripheral.id}] retrieved peripheral services`,
-          peripheralData,
-        );
-
-        const characteristics = peripheralData.characteristics;
-        characteristics?.forEach(async characteristic => {
-          const {characteristic: char, properties} = characteristic;
-          console.log(`Characteristic ${char} properties:`, properties);
-        });
-        await BleManager.checkState().then(state =>
-          console.log(`current BLE state = '${state}'.`),
-        );
-        const sUUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
-        const cUUID = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
-        await BleManager.startNotification(
-          peripheral.id,
-          sUUID,
-          cUUID,
-          // '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-          // '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
-          // '0x2A38',
-          // '0x2A38',
-        )
-          .then(() => {
-            // Success code
-            console.log('Notification started on characteristic:', cUUID);
-          })
-          .catch(error => {
-            // Failure code
-            console.log('1111에러는 : ', error);
-          });
-
-        // RSSI 읽기
-        const rssi = await BleManager.readRSSI(peripheral.id);
-        console.debug(
-          `[connectPeripheral][${peripheral.id}] retrieved current RSSI value: ${rssi}.`,
-        );
-
-        let p = peripherals.get(peripheral.id);
-        if (p) {
-          addOrUpdatePeripheral(peripheral.id, {...peripheral, rssi});
-        }
-
-        setConnectedDeviceId(peripheral.id);
-
-        return () => {};
-      }
-    } catch (error) {
-      console.error(
-        `[connectPeripheral][${peripheral.id}] connectPeripheral error`,
-        error,
-      );
-      console.log('연결에 실패했다.');
-    }
-  };
-
-  function sleep(ms: number) {
-    return new Promise<void>(resolve => setTimeout(resolve, ms));
-  }
   useEffect(() => {
     try {
       BleManager.start({showAlert: false})
@@ -513,12 +147,6 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
         'BleManagerDiscoverPeripheral',
         handleDiscoverPeripheral,
       ),
-      // bleManagerEmitter.addListener(
-      //   'BleManagerDiscoverPeripheral',
-      //   peripheral => {
-      //     console.log('Discovered peripheral:', peripheral);
-      //   },
-      // ),
       bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan),
       bleManagerEmitter.addListener(
         'BleManagerDisconnectPeripheral',
@@ -534,7 +162,6 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
           const isConnected = peripheral.connected;
           console.log('연결 상태 변경:', isConnected);
 
-          // 연결 상태를 상태에 업데이트
           const updatedPeripheral = {
             ...peripheral,
             connected: isConnected,
@@ -552,7 +179,6 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
         listener.remove();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAndroidPermissions = () => {
@@ -598,86 +224,6 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
     }
   };
 
-  const renderItem = ({item}: {item: Peripheral}) => {
-    // if (item.id && item.id.includes(searchDeviceId)) {
-    // if (item.name && item.name.includes(targetDeviceName)) {
-    // if (item.name) {
-    if (item.name?.includes(targetDeviceName)) {
-      // console.log('item : ', item);
-      return (
-        <TouchableHighlight
-          onPress={() => {
-            togglePeripheralConnection(item);
-          }}
-          key={item.id}
-          style={{
-            ...styles.touch_box,
-            // backgroundColor: item.connecting ? 'white' : 'white',
-            // opacity: item.connecting ? 1 : 0.35,
-          }}>
-          <View style={styles.row}>
-            <Image
-              source={require('../assets/images/device_icon.png')}
-              style={styles.icon}
-            />
-            <Text style={styles.peripheral_name}>{item.id}</Text>
-            {/* <Image
-              source={
-                ir === 0
-                  ? require('../assets/images/connecting_img1.png')
-                  : require('../assets/images/connecting_img2.png')
-              }
-              style={styles.connecting}
-            /> */}
-          </View>
-        </TouchableHighlight>
-      );
-    }
-    return null;
-  };
-
-  const sendData = (data: string, connectedDeviceId: string | null) => {
-    console.log('입력한 데이터는 : ', inputValue);
-    if (!connectedDeviceId) {
-      console.log('연결된 장치가 없습니다.');
-      return;
-    } else {
-      console.log('연결된 장치의 deviceID : ', connectedDeviceId);
-    }
-
-    const byteArray = convertDataToByteArray(data);
-
-    // BLE 장치로 데이터 송신
-    BleManager.write(
-      connectedDeviceId,
-      SERVICE_UUID,
-      CHARACTERISTIC_UUID_RX,
-      byteArray,
-    )
-      .then(() => {
-        // 성공적으로 데이터를 씀
-        console.log('데이터를 BLE 장치로 성공적으로 보냈습니다.', data);
-      })
-      .catch(error => {
-        // 데이터 쓰기 중 오류 발생
-        console.error('데이터를 BLE 장치로 보내는 동안 오류 발생:', error);
-      });
-  };
-
-  // 데이터를 바이트 배열로 변환
-  const convertDataToByteArray = (data: string): number[] => {
-    const byteArray: number[] = [];
-    for (let i = 0; i < data.length; i++) {
-      byteArray.push(data.charCodeAt(i));
-    }
-    return byteArray;
-  };
-  // const {data} = route ? route.params : null;
-
-  // const handleConnectBle = () => {
-  //   navigation.navigate('ConnectBle');
-  // };
-
   useEffect(() => {
     const { width, height } = Dimensions.get('window');
     setOrientation(width < height ? 'PORTRAIT' : 'LANDSCAPE');
@@ -689,34 +235,19 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
     return () => subscription.remove();
   }, []);
 
-  const handleChartTouch = () => {
-    if (orientation === 'LANDSCAPE') {
-      setShowControls(true);
-      // 3초 후에 컨트롤을 다시 숨김
-      setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
-  };
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    // 여기에 실제 재생/정지 로직 구현
-    console.log(isPlaying ? 'Pausing...' : 'Playing...');
-  };
   return (
     <>
     {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
 
     <ScrollView style={styles.container}>
-      {/* <DashboardInfo screen={orientation} pet={selectedPet}/> */}
+      <DashboardInfo screen={orientation} pet={selectedPet}/>
       <DashboardChart screen={orientation}/>
       <DashboardData screen={orientation} data={{
         hrData : hrData,
         spo2Data : spo2Data,
         tempData : tempData,  
       }}/>
-   
+      {orientation === "PORTRAIT" ? (<View style={styles.portrait_view}><Text style={styles.portrait_text}>가로로 화면을 봐보세요.</Text></View>) : ""}
     </ScrollView>
     {orientation === 'PORTRAIT' && <NavigationBar />}
  
@@ -945,5 +476,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  portrait_view: {
+    width: "100%",
+    height: "auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 60,
+  },
+  portrait_text: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#262626",
+  }
 });
 export default Dashboard;

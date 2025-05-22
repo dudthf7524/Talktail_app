@@ -9,7 +9,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -17,44 +16,80 @@ import SelectDropdown from 'react-native-select-dropdown';
 import { userStore } from '../store/userStore';
 import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AlertModal from './modal/alertModal';
+import ConfirmModal from './modal/confirmModal';
+
+type RootStackParamList = {
+  PetLists: undefined;
+  EditPet: { pet: any };
+  Login: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 type PetData = {
   name: string;
   birth: Date;
   breed: string;
   gender: boolean;
-  isNeutered: boolean;
+  neutered: boolean;
   disease: string;
 };
 
-const EditPet = ({ route, navigation }) => {
-  const { pet } = route.params;
-  const { updatePet, updateLoading, updateError, fetchPets } = userStore();
+const EditPet = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute();
+  const { pet } = route.params as { pet: any };
+  const { 
+    updatePet, 
+    updateLoading,
+    updateSuccess, 
+    updateError,
+    offUpdateSuccess,
+    offUpdateError
+  } = userStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
-    name: '',
-    birth: new Date(),
-    breed: '',
-    gender: true,
-    isNeutered: false,
-    disease: '',
+    name: pet.name,
+    birth: new Date(pet.birth),
+    breed: pet.breed,
+    gender: pet.gender,
+    neutered: pet.neutered,
+    disease: pet.disease || '',
   });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [openAlertModal, setOpenAlertModal] = useState(false);
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', content: '' });
 
   useEffect(() => {
-    // Convert string date to Date object
-    const [year, month, day] = pet.birth.split('-').map(Number);
-    const birthDate = new Date(year, month - 1, day);
+    if (updateSuccess) {
+      setOpenConfirmModal(false);
+      setModalContent({
+        title: "펫 정보 수정",
+        content: "펫 정보가 수정되었습니다."
+      });
+      setOpenMessageModal(true);
+      offUpdateSuccess();
+      setTimeout(() => {
+        navigation.navigate('PetLists');
+      }, 1500);
+    }
+  }, [updateSuccess]);
 
-    setFormData({
-      name: pet.name,
-      birth: birthDate,
-      breed: pet.breed,
-      gender: pet.gender,
-      isNeutered: pet.isNeutered,
-      disease: pet.disease,
-    });
-  }, [pet]);
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  useEffect(() => {
+    if (updateError) {
+      setOpenConfirmModal(false);
+      setModalContent({
+        title: "오류",
+        content: updateError
+      });
+      setOpenAlertModal(true);
+      offUpdateError();
+    }
+  }, [updateError]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -75,15 +110,24 @@ const EditPet = ({ route, navigation }) => {
     try {
       const token = await getToken();
       if (!token) {
-        Alert.alert("오류", "로그인해주세요.");
-        navigation.navigate('Login');
+        setModalContent({
+          title: "오류",
+          content: "로그인해주세요."
+        });
+        setOpenAlertModal(true);
+        setTimeout(() => {
+          navigation.navigate('Login');
+        }, 1500);
         return;
       }
-      
 
       const { device_code } = token;
       if (!device_code) {
-        Alert.alert("오류", "디바이스 코드를 찾을 수 없습니다. 다시 로그인해주세요.");
+        setModalContent({
+          title: "오류",
+          content: "디바이스 코드를 찾을 수 없습니다. 다시 로그인해주세요."
+        });
+        setOpenAlertModal(true);
         return;
       }
 
@@ -97,12 +141,13 @@ const EditPet = ({ route, navigation }) => {
       };
 
       await updatePet(petData);
-      setOpenMessageModal(true);
-      await fetchPets();
-      navigation.navigate('PetLists');
     } catch (error) {
       console.error('Error updating pet:', error);
-      Alert.alert("수정 실패", "펫 정보 수정에 실패했습니다. 다시 시도해주세요.");
+      setModalContent({
+        title: "수정 실패",
+        content: "펫 정보 수정에 실패했습니다. 다시 시도해주세요."
+      });
+      setOpenAlertModal(true);
     }
   };
 
@@ -199,25 +244,25 @@ const EditPet = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      formData.isNeutered && styles.radioButtonSelected,
+                      formData.neutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: true }))}
+                    onPress={() => setFormData(prev => ({ ...prev, neutered: true }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      formData.isNeutered && styles.radioButtonTextSelected,
+                      formData.neutered && styles.radioButtonTextSelected,
                     ]}>예</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      !formData.isNeutered && styles.radioButtonSelected,
+                      !formData.neutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: false }))}
+                    onPress={() => setFormData(prev => ({ ...prev, neutered: false }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      !formData.isNeutered && styles.radioButtonTextSelected,
+                      !formData.neutered && styles.radioButtonTextSelected,
                     ]}>아니오</Text>
                   </TouchableOpacity>
                 </View>
@@ -239,7 +284,7 @@ const EditPet = ({ route, navigation }) => {
 
               <TouchableOpacity 
                 style={[styles.submitButton, updateLoading && styles.submitButtonDisabled]} 
-                onPress={handleUpdate}
+                onPress={() => setOpenConfirmModal(true)}
                 disabled={updateLoading}
               >
                 <Text style={styles.submitButtonText}>
@@ -250,10 +295,25 @@ const EditPet = ({ route, navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <AlertModal
+        visible={openAlertModal}
+        title={modalContent.title}
+        content={modalContent.content}
+        onClose={() => setOpenAlertModal(false)}
+      />
+      <ConfirmModal
+        visible={openConfirmModal}
+        title="펫 정보 수정"
+        content="펫 정보를 수정하시겠습니까?"
+        confirmText="수정"
+        cancelText="취소"
+        onCancel={() => setOpenConfirmModal(false)}
+        onConfirm={handleUpdate}
+      />
       <MessageModal
         visible={openMessageModal}
-        title="수정 완료"
-        content="반려동물 정보가 수정되었습니다."
+        title={modalContent.title}
+        content={modalContent.content}
         onClose={() => setOpenMessageModal(false)}
       />
     </>

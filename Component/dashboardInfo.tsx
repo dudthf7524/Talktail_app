@@ -4,7 +4,7 @@ import {SafeAreaView, StyleSheet, Text, View, Image} from "react-native";
 interface Pet {
   name: string;
   gender: boolean;
-  birthDate: string;
+  birth: string;
   breed: string;
   isNeutered: boolean;
   disease: string;

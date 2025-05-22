@@ -55,7 +55,7 @@ export const setToken = async (token: string): Promise<void> => {
 export const getToken = async (): Promise<{ org_id: string; device_code: string } | null> => {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);
-
+    
     if (!token) {
       console.log("No token found in storage");
       return null;

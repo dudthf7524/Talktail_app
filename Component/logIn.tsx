@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -6,16 +6,15 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import axios from 'axios';
-import { API_URL } from './constant/contants';
-import { setToken, setDeviceCode } from '../utils/storage';
+import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
+import AlertModal from './modal/alertModal';
+import { deviceStore } from '../store/deviceStore';
 
 type RootStackParamList = {
   Login: undefined;
@@ -37,14 +36,66 @@ type FormErrors = {
 };
 
 const Login = ({ navigation }: { navigation: NavigationProp }) => {
-
-  console.log(API_URL)
   const [formData, setFormData] = useState<FormData>({
     id: '',
     password: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
+  const [openAlertModal, setOpenAlertModal] = useState<boolean>(false);
+  const [modalContent, setModalContent] = useState<{title: string, content: string}>({
+    title: '',
+    content: ''
+  });
+
+  const { 
+    login, 
+    loginSuccess, 
+    loginError,
+    offLoginSuccess,
+    offLoginError
+  } = deviceStore();
+
+  // useEffect(() => {
+  //   const checkToken = async () => {
+  //     const token = await getToken();
+  //     if (token && token.device_code) {
+  //       setModalContent({
+  //         title: "로그인 정보 확인",
+  //         content: "로그인 정보가 남아있어 목록 페이지로 이동합니다."
+  //       });
+  //       setOpenMessageModal(true);
+  //       setTimeout(() => {
+  //         navigation.navigate('PetLists');
+  //       }, 1500);
+  //     }
+  //   };
+  //   checkToken();
+  // }, []);
+
+  useEffect(() => {
+    if (loginSuccess) {
+      setModalContent({
+        title: "로그인 성공",
+        content: "로그인이 성공적으로 완료되었습니다."
+      });
+      setOpenMessageModal(true);
+      offLoginSuccess();
+      navigation.navigate('PetLists');
+    }
+  }, [loginSuccess]);
+
+  useEffect(() => {
+    if (loginError) {
+      setModalContent({
+        title: "로그인 실패",
+        content: loginError
+      });
+      setOpenAlertModal(true);
+      offLoginError();
+    }
+  }, [loginError]);
+
   // 유효성 검사
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -67,17 +118,9 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/user/login`, formData);
-      if(response.status === 200){
-        const token = response.data.data.token;
-        
-        await setToken(token);
-        setOpenMessageModal(true);
-        navigation.navigate('PetLists');
-      }
-    } catch(e){
-      console.error(e);
-      Alert.alert("로그인 실패", "아이디 또는 비밀번호를 확인해주세요.");
+      await login(formData);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -147,9 +190,15 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     </SafeAreaView>
     <MessageModal
       visible={openMessageModal}
-      title="로그인 성공"
-      content="로그인이 성공적으로 완료되었습니다."
+      title={modalContent.title}
+      content={modalContent.content}
       onClose={() => setOpenMessageModal(false)}
+    />
+    <AlertModal
+      visible={openAlertModal}
+      title={modalContent.title}
+      content={modalContent.content}
+      onClose={() => setOpenAlertModal(false)}
     />
  </>
   );

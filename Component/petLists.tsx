@@ -26,7 +26,7 @@ type RootStackParamList = {
       birth: string;
       breed: string;
       gender: boolean;
-      isNeutered: boolean;
+      neutered: boolean;
       disease: string;
     };
   };
@@ -36,7 +36,7 @@ type RootStackParamList = {
       gender: boolean;
       birth: string;
       breed: string;
-      isNeutered: boolean;
+      neutered: boolean;
       disease: string;
     };
   };
@@ -52,7 +52,6 @@ const PetLists = ({ navigation }) => {
   const [openConfirmModal, setOpenConfirmModal] = useState<boolean>(false);
   const [deletePetId, setDeletePetId] = useState<string | null>(null);
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
-
   const toggleExpand = (petId: string) => {
     setExpandedPetId(expandedPetId === petId ? null : petId);
   };
@@ -117,9 +116,9 @@ const PetLists = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.scrollView}>
           <View style={styles.petList}>
-            {pets.map((pet) => (
+            {pets.map((pet,index) => (
               <TouchableOpacity
-                key={pet.pet_code}
+                key={index}
                 style={[
                   styles.petCard,
                   selectedPetId === pet.pet_code && styles.selectedPetCard
@@ -161,7 +160,7 @@ const PetLists = ({ navigation }) => {
                   </View>
                   {expandedPetId === pet.pet_code && (
                     <View style={styles.diseasesContainer}>
-                      <Text style={styles.isNeuteredText}>중성화 여부 : {pet.isNeutered ? '완료' : '미완료'}</Text>
+                      <Text style={styles.isNeuteredText}>중성화 여부 : {pet.neutered ? '완료' : '미완료'}</Text>
                       <Text style={styles.diseasesTitle}>앓고 있는 질병</Text>
                       <Text style={styles.diseasesText}>{pet.disease}</Text>
                     </View>
@@ -171,7 +170,7 @@ const PetLists = ({ navigation }) => {
                     onPress={() => toggleExpand(pet.pet_code)}
                   >
                     <Text style={styles.moreButtonText}>
-                      {expandedPetId === pet.pet_code ? '접기' : '질병보기'}
+                      {expandedPetId === pet.pet_code ? '접기' : '상세보기'}
                     </Text>
                   </TouchableOpacity>
                 </View>

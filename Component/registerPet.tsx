@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -9,37 +9,62 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { userStore } from '../store/userStore';
 import { getToken } from '../utils/storage';
-import MessageModal from './modal/messageModal';
+import AlertModal from './modal/alertModal';
 
 type PetData = {
   name: string;
   birth: Date;
   breed: string;
   gender: boolean;
-  isNeutered: boolean;
+  neutered: boolean;
   disease: string;
 };
 
 const RegisterPet = ({ navigation }) => {
   const [errors, setErrors] = useState<FormErrors>({});
-  const { registerPet, registerLoading, fetchPets } = userStore();
-  const [openMessageModal, setOpenMessageModal] = useState(false);
+  const { registerPet, registerLoading, registerSuccess, registerError, offRegisterSuccess, offRegisterError } = userStore();
+  const [openAlertModal, setOpenAlertModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const [formData, setFormData] = useState<PetData>({
     name: '',
     birth: new Date(2020, 0, 1),
     breed: '',
     gender: true,
-    isNeutered: false,
+    neutered: false,
     disease: '',
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    if (registerSuccess) {
+      setModalContent({
+        title: '등록 완료',
+        content: '반려동물이 등록되었습니다.'
+      });
+      setOpenAlertModal(true);
+      setTimeout(() => {
+        navigation.navigate('PetLists');
+      }, 1500);
+    }
+    offRegisterSuccess();
+  }, [registerSuccess]);
+
+  useEffect(() => {
+    if (registerError) {
+      setModalContent({
+        title: '등록 실패',
+        content: registerError
+      });
+      setOpenAlertModal(true);
+    }
+    offRegisterError();
+  }, [registerError]);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -85,7 +110,11 @@ const RegisterPet = ({ navigation }) => {
     try {
       const token = await getToken();
       if (!token) {
-        Alert.alert("오류", "로그인해주세요.");
+        setModalContent({
+          title: '오류',
+          content: '로그인해주세요.'
+        });
+        setOpenAlertModal(true);
         navigation.navigate('Login');
         return;
       }
@@ -93,23 +122,22 @@ const RegisterPet = ({ navigation }) => {
       const { device_code } = token;
 
       const petData = {
-        ...formData,
+        name: formData.name,
         birth: formData.birth.getFullYear().toString() + '-' +
           (formData.birth.getMonth() + 1).toString().padStart(2, '0') + '-' +
           formData.birth.getDate().toString().padStart(2, '0'),
+        breed: formData.breed,
+        gender: formData.gender,
+        neutered: formData.neutered,
+        disease: formData.disease,
         device_code
       };
 
       await registerPet(petData);
-      setOpenMessageModal(true);
-      await fetchPets();
-      navigation.navigate('PetLists');
     } catch (error) {
       console.error('Error registering pet:', error);
-      Alert.alert("등록 실패", "펫 등록에 실패했습니다. 다시 시도해주세요.");
     }
   };
-
 
   return (
     <>
@@ -126,7 +154,12 @@ const RegisterPet = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.name}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, name: text }));
+                    if (errors.name) {
+                      setErrors(prev => ({ ...prev, name: undefined }));
+                    }
+                  }}
                   placeholder="반려동물 이름을 입력하세요"
                 />
                 {errors.name && (
@@ -150,7 +183,12 @@ const RegisterPet = ({ navigation }) => {
                     value={formData.birth}
                     mode="date"
                     display="default"
-                    onChange={handleDateChange}
+                    onChange={(event, selectedDate) => {
+                      handleDateChange(event, selectedDate);
+                      if (errors.birth) {
+                        setErrors(prev => ({ ...prev, birth: undefined }));
+                      }
+                    }}
                     maximumDate={new Date()}
                   />
                 )}
@@ -165,7 +203,12 @@ const RegisterPet = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.breed}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, breed: text }))}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, breed: text }));
+                    if (errors.breed) {
+                      setErrors(prev => ({ ...prev, breed: undefined }));
+                    }
+                  }}
                   placeholder="품종을 입력하세요(ex : 말티즈, 푸들)"
                 />
                 {errors.breed && (
@@ -211,25 +254,25 @@ const RegisterPet = ({ navigation }) => {
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      formData.isNeutered && styles.radioButtonSelected,
+                      formData.neutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: true }))}
+                    onPress={() => setFormData(prev => ({ ...prev, neutered: true }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      formData.isNeutered && styles.radioButtonTextSelected,
+                      formData.neutered && styles.radioButtonTextSelected,
                     ]}>예</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      !formData.isNeutered && styles.radioButtonSelected,
+                      !formData.neutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: false }))}
+                    onPress={() => setFormData(prev => ({ ...prev, neutered: false }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      !formData.isNeutered && styles.radioButtonTextSelected,
+                      !formData.neutered && styles.radioButtonTextSelected,
                     ]}>아니오</Text>
                   </TouchableOpacity>
                 </View>
@@ -261,11 +304,11 @@ const RegisterPet = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-      <MessageModal
-        visible={openMessageModal}
-        title="등록 완료"
-        content="반려동물이 등록되었습니다."
-        onClose={() => setOpenMessageModal(false)}
+      <AlertModal
+        visible={openAlertModal}
+        title={modalContent.title}
+        content={modalContent.content}
+        onClose={() => setOpenAlertModal(false)}
       />
     </>
   );

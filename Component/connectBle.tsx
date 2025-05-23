@@ -219,6 +219,7 @@ const ConnectBle = ({ route }: Props) => {
   };
 
   const handleAndroidPermissions = async () => {
+    console.log(Platform.OS)
     if (Platform.OS === 'android' && Platform.Version >= 31) {
       const result = await PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
@@ -565,4 +566,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ConnectBle; 
+export default ConnectBle;

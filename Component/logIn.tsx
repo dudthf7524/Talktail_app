@@ -15,6 +15,7 @@ import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
 import AlertModal from './modal/alertModal';
 import { deviceStore } from '../store/deviceStore';
+import { API_URL } from './constant/contants';
 
 type RootStackParamList = {
   Login: undefined;
@@ -36,6 +37,7 @@ type FormErrors = {
 };
 
 const Login = ({ navigation }: { navigation: NavigationProp }) => {
+  console.log(API_URL)
   const [formData, setFormData] = useState<FormData>({
     id: '',
     password: '',

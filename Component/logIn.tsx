@@ -9,13 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Dimensions,
+  useWindowDimensions
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
 import AlertModal from './modal/alertModal';
 import { deviceStore } from '../store/deviceStore';
-import { API_URL } from './constant/contants';
+import Orientation from 'react-native-orientation-locker';
+import TermsModal from './modal/termsModal';
 
 type RootStackParamList = {
   Login: undefined;
@@ -37,7 +39,6 @@ type FormErrors = {
 };
 
 const Login = ({ navigation }: { navigation: NavigationProp }) => {
-  console.log(API_URL)
   const [formData, setFormData] = useState<FormData>({
     id: '',
     password: '',
@@ -45,14 +46,15 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
   const [openAlertModal, setOpenAlertModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<{title: string, content: string}>({
+  const [modalContent, setModalContent] = useState<{ title: string, content: string }>({
     title: '',
     content: ''
   });
-
-  const { 
-    login, 
-    loginSuccess, 
+  const [openTermsModal, setOpenTermsModal] = useState<boolean>(false);
+  const [termsType, setTermsType] = useState<'privacy' | 'terms' | 'agreement'>('privacy');
+  const {
+    login,
+    loginSuccess,
     loginError,
     offLoginSuccess,
     offLoginError
@@ -83,7 +85,9 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       });
       setOpenMessageModal(true);
       offLoginSuccess();
-      navigation.navigate('PetLists');
+      setTimeout(() => {
+        navigation.navigate('PetLists');
+      }, 2000);
     }
   }, [loginSuccess]);
 
@@ -97,6 +101,24 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       offLoginError();
     }
   }, [loginError]);
+
+  // const { width, height } = useWindowDimensions();
+  // useEffect(() => {
+  //   if (width > height) {
+  //     Dimensions.set({
+  //       width: height,
+  //       height: width
+  //     });
+  //   }
+  // }, [width, height]);
+
+  useEffect(() => {
+    Orientation.lockToPortrait();
+
+    return () => {
+      Orientation.unlockAllOrientations();
+    };
+  }, []);
 
   // 유효성 검사
   const validateForm = (): boolean => {
@@ -126,83 +148,119 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     }
   };
 
+  const handleSignUpPress = () => {
+    setTermsType('agreement');
+    setOpenTermsModal(true);
+  };
+  
+  const handleTermsAgree = () => {
+    setOpenTermsModal(false);
+    navigation.navigate('SignUp');
+  };
+
   return (
     <>
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Image source={require('../assets/images/talkTail_logo.png')} style={styles.logo} />
-            <Text style={styles.subtitle}>반려동물은 Tail로 소통하고</Text>
-            <Text style={styles.subtitle}>우리는 "Talktail"로 소통합니다.</Text>
-          </View>
-
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>아이디</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.id}
-                onChangeText={(text) => {
-                  setFormData(prev => ({ ...prev, id: text }));
-                  setErrors(prev => ({ ...prev, id: undefined }));
-                }}
-                placeholder="아이디를 입력하세요"
-                placeholderTextColor="#999999"
-              />
-              {errors.id && (
-                <Text style={styles.errorText}>{errors.id}</Text>
-              )}
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <SafeAreaView style={styles.content}>
+            <View style={styles.header}>
+              <Image source={require('../assets/images/talkTail_logo.png')} style={styles.logo} />
+              <Text style={styles.subtitle}>반려동물은 Tail로 소통하고</Text>
+              <Text style={styles.subtitle}>우리는 "Talktail"로 소통합니다.</Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>비밀번호</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.password}
-                onChangeText={(text) => {
-                  setFormData(prev => ({ ...prev, password: text }));
-                  setErrors(prev => ({ ...prev, password: undefined }));
-                }}
-                placeholder="비밀번호를 입력하세요"
-                placeholderTextColor="#999999"
-                secureTextEntry
-              />
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              )}
-            </View>
+            <SafeAreaView style={styles.form}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>아이디</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.id}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, id: text }));
+                    setErrors(prev => ({ ...prev, id: undefined }));
+                  }}
+                  placeholder="아이디를 입력하세요"
+                  placeholderTextColor="#999999"
+                />
+                {errors.id && (
+                  <Text style={styles.errorText}>{errors.id}</Text>
+                )}
+              </View>
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>로그인</Text>
-            </TouchableOpacity>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>비밀번호</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.password}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, password: text }));
+                    setErrors(prev => ({ ...prev, password: undefined }));
+                  }}
+                  placeholder="비밀번호를 입력하세요"
+                  placeholderTextColor="#999999"
+                  secureTextEntry
+                />
+                {errors.password && (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                )}
+              </View>
 
-            <TouchableOpacity 
-              style={styles.signUpButton}
-              onPress={() => navigation.navigate('SignUp')}
-            >
-              <Text style={styles.signUpButtonText}>회원가입</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-    <MessageModal
-      visible={openMessageModal}
-      title={modalContent.title}
-      content={modalContent.content}
-      onClose={() => setOpenMessageModal(false)}
-    />
-    <AlertModal
-      visible={openAlertModal}
-      title={modalContent.title}
-      content={modalContent.content}
-      onClose={() => setOpenAlertModal(false)}
-    />
- </>
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <Text style={styles.submitButtonText}>로그인</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.signUpButton}
+                onPress={handleSignUpPress}
+              >
+                <Text style={styles.signUpButtonText}>회원가입</Text>
+              </TouchableOpacity>
+
+              <View style={styles.termsContainer}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTermsType('privacy');
+                    setOpenTermsModal(true);
+                  }}
+                >
+                  <Text style={styles.termsText}>개인정보 처리방침</Text>
+                </TouchableOpacity>
+                <Text style={styles.termsDivider}>|</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTermsType('terms');
+                    setOpenTermsModal(true);
+                  }}
+                >
+                  <Text style={styles.termsText}>이용약관</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+      <MessageModal
+        visible={openMessageModal}
+        title={modalContent.title}
+        content={modalContent.content}
+        onClose={() => setOpenMessageModal(false)}
+      />
+      <AlertModal
+        visible={openAlertModal}
+        title={modalContent.title}
+        content={modalContent.content}
+        onClose={() => setOpenAlertModal(false)}
+      />
+      <TermsModal
+        visible={openTermsModal}
+        type={termsType}
+        onClose={() => setOpenTermsModal(false)}
+        onAgree={handleTermsAgree}
+      />
+    </>
   );
 };
 
@@ -224,12 +282,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 300,
+    width: '80%',
     height: 100,
     marginBottom: 4
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 14,
     color: '#F5B75C',
   },
   form: {
@@ -242,7 +300,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#F5B75C',
+    color: '#F0663F',
   },
   input: {
     borderWidth: 1,
@@ -282,6 +340,22 @@ const styles = StyleSheet.create({
     color: '#F0663F',
     fontSize: 18,
     fontWeight: '600',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  termsText: {
+    color: '#666',
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  termsDivider: {
+    color: '#666',
+    fontSize: 12,
+    marginHorizontal: 10,
   },
 });
 

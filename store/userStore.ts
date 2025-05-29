@@ -138,7 +138,7 @@ export const userStore = create<UserStore>((set, get) => ({
       set({
         updateLoading: false,
         updateSuccess: false,
-        updateError: error.response?.data?.message || '펫 정보 수정에 실패했습니다.'
+        updateError: error.response?.data?.message || '동물 정보 수정에 실패했습니다.'
       });
       throw error;
     }

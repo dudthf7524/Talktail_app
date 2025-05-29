@@ -26,8 +26,16 @@ interface ChangeInfo {
   org_email: string;
 }
 
+interface Agree {
+  agree_marketing: boolean;
+  agree_sms: boolean;
+  agree_email: boolean;
+  agree_push: boolean;
+}
+
 interface OrgStore {
   org: Org;
+  agree: Agree;
   loadLoading: boolean;
   loadError: string | null;
   updateLoading: boolean;
@@ -41,11 +49,15 @@ interface OrgStore {
   logoutLoading: boolean;
   logoutError: string | null;
   logoutSuccess: boolean;
+  loadAgreeLoading: boolean;
+  loadAgreeError: string | null;
+  loadAgreeSuccess: boolean;
   loadOrg: () => Promise<void>;
   updateOrg: (org: Org) => Promise<void>;
   changePW: (info: ChangePW) => Promise<void>;
   changeInfo: (info: ChangeInfo) => Promise<void>;
   logout: () => Promise<void>;
+  loadAgree: () => Promise<void>;
   offChangePWSuccess: () => void;
   offChangePWError: () => void;
   offChangeInfoSuccess: () => void;
@@ -64,6 +76,12 @@ export const orgStore = create<OrgStore>((set, get) => ({
     org_phone: '',
     org_email: '',
   },
+  agree: {
+    agree_marketing: false,
+    agree_sms: false,
+    agree_email: false,
+    agree_push: false,
+  },
   loadLoading: false,
   loadError: null,
   updateLoading: false,
@@ -77,6 +95,10 @@ export const orgStore = create<OrgStore>((set, get) => ({
   logoutLoading: false,
   logoutError: null,
   logoutSuccess: false,
+  loadAgreeLoading: false,
+  loadAgreeError: null,
+  loadAgreeSuccess: false,
+
 
   loadOrg: async () => {
     try {
@@ -195,6 +217,22 @@ export const orgStore = create<OrgStore>((set, get) => ({
         logoutSuccess: false,
         logoutError: '로그아웃에 실패했습니다.'
       });
+      throw error;
+    }
+  },
+  loadAgree: async() => {
+    try {
+      set({loadAgreeLoading: true, loadAgreeError: null, loadAgreeSuccess: false});
+      const token = await getToken();
+      if(!token) {
+        throw new Error('토큰이 없습니다.');
+      }
+      const response = await axios.post(`${API_URL}/org/loadAgree`, {token});
+      set({agree: response.data.data, loadAgreeLoading: false, loadAgreeSuccess: true});
+    }
+    catch(error) {
+      console.error(error);
+      set({loadAgreeLoading: false, loadAgreeError: '약관 불러오기에 실패했습니다.', loadAgreeSuccess: false});
       throw error;
     }
   },

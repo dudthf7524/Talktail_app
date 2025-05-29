@@ -1,44 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import {
+  SafeAreaView,
   StyleSheet,
   Text,
   View,
   TextInput,
   TouchableOpacity,
-  Modal,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import Header from './header';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ConfirmModal from "../Component/modal/confirmModal";
 import MessageModal from "../Component/modal/messageModal";
 import AlertModal from "../Component/modal/alertModal";
 import { orgStore } from '../store/orgStore';
-
-type RootStackParamList = {
-  Login: undefined;
-  // 다른 스크린들도 여기에 추가할 수 있습니다
-};
+import { RootStackParamList } from '../types/navigation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-interface MypageChangePWProps {
-  visible: boolean;
-  onClose: () => void;
-  org_id: string;
-}
+type FormErrors = {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+};
 
-const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
+const MypageChangePW = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [formData, setFormData] = useState({
-    currentPassword: org_id,
-    newPassword: '',
-    confirmPassword: '',
-  });
+
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const { 
+    loadOrg,
+    org,
     changePW, 
     changePWSuccess, 
     changePWError,
@@ -46,6 +44,18 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
     offChangePWError,
     logout 
   } = orgStore();
+
+  useEffect(() => {
+    loadOrg();
+  }, []);
+
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const handleLogout = async () => {
     try {
@@ -59,7 +69,33 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
     }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.currentPassword) {
+      newErrors.currentPassword = '기존 비밀번호를 입력해주세요.';
+    }
+
+    if (!formData.newPassword) {
+      newErrors.newPassword = '새 비밀번호를 입력해주세요.';
+    } else if (formData.newPassword.length < 8) {
+      newErrors.newPassword = '비밀번호는 8자 이상이어야 합니다.';
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
     try {
       const sendData = { 
         org_pw: formData.currentPassword, 
@@ -109,73 +145,84 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
   }, [changePWError]);
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.title}>비밀번호 변경</Text>
-          
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>아이디</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: '#f5f5f5' }]}
-                value={org_id}
-                editable={false}
-                placeholder="아이디"
-              />
-            </View>
+    <>
+      <Header title="비밀번호 변경" />
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
+          <ScrollView style={styles.scrollView}>
+            <View style={styles.form}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>아이디</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: '#f5f5f5' }]}
+                  value={org?.org_id}
+                  editable={false}
+                  placeholder="아이디"
+                />
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>기존 비밀번호</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.currentPassword}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, currentPassword: text }))}
-                placeholder="기존 비밀번호를 입력하세요"
-                secureTextEntry
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>기존 비밀번호</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.currentPassword}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, currentPassword: text }));
+                  }}
+                  placeholder="기존 비밀번호를 입력하세요"
+                  secureTextEntry
+                />
+                {errors.currentPassword && (
+                  <Text style={styles.errorText}>{errors.currentPassword}</Text>
+                )}
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>새 비밀번호</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.newPassword}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, newPassword: text }))}
-                placeholder="새 비밀번호를 입력하세요"
-                secureTextEntry
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>새 비밀번호</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.newPassword}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, newPassword: text }));
+                  }}
+                  placeholder="새 비밀번호를 입력하세요"
+                  secureTextEntry
+                />
+                {errors.newPassword && (
+                  <Text style={styles.errorText}>{errors.newPassword}</Text>
+                )}
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>새 비밀번호 확인</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.confirmPassword}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, confirmPassword: text }))}
-                placeholder="새 비밀번호를 다시 입력하세요"
-                secureTextEntry
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>새 비밀번호 확인</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => {
+                    setFormData(prev => ({ ...prev, confirmPassword: text }));
+                  }}
+                  placeholder="새 비밀번호를 다시 입력하세요"
+                  secureTextEntry
+                />
+                {errors.confirmPassword && (
+                  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                )}
+              </View>
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                <Text style={styles.cancelButtonText}>취소하기</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.submitButton} onPress={()=>{
-                setOpenConfirmModal(true);
+              <TouchableOpacity style={styles.submitButton} onPress={() => {
+                if (validateForm()) {
+                  setOpenConfirmModal(true);
+                }
               }}>
                 <Text style={styles.submitButtonText}>변경하기</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
       <AlertModal
         visible={openAlertModal}
         title={modalContent.title}
@@ -197,33 +244,20 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
         content={modalContent.content}
         onClose={() => setOpenMessageModal(false)}
       />
-    </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    width: '90%',
-    maxWidth: 400,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#F0663F',
-    marginBottom: 20,
-    textAlign: 'center',
+  scrollView: {
+    flex: 1,
   },
   form: {
-    width: '100%',
+    padding: 20,
   },
   inputGroup: {
     marginBottom: 20,
@@ -243,35 +277,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     color: '#262626',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#E0E0E0',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#666666',
-    fontSize: 18,
-    fontWeight: '600',
-  },
   submitButton: {
-    flex: 1,
     backgroundColor: '#F0663F',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 24,
   },
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 

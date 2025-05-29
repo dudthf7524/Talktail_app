@@ -15,6 +15,7 @@ import { userStore } from '../store/userStore';
 import type { Pet } from '../store/userStore';
 import ConfirmModal from './modal/confirmModal';
 import MessageModal from './modal/messageModal';
+import AlertModal from './modal/alertModal';
 
 type RootStackParamList = {
   PetLists: undefined;
@@ -28,6 +29,7 @@ type RootStackParamList = {
       gender: boolean;
       neutered: boolean;
       disease: string;
+      history: string;
     };
   };
   Dashboard: {
@@ -38,6 +40,7 @@ type RootStackParamList = {
       breed: string;
       neutered: boolean;
       disease: string;
+      history: string;
     };
   };
   ConnectBle: undefined;
@@ -52,6 +55,8 @@ const PetLists = ({ navigation }) => {
   const [openConfirmModal, setOpenConfirmModal] = useState<boolean>(false);
   const [deletePetId, setDeletePetId] = useState<string | null>(null);
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
+  const [openAlertModal, setOpenAlertModal] = useState<boolean>(false);
+
   const toggleExpand = (petId: string) => {
     setExpandedPetId(expandedPetId === petId ? null : petId);
   };
@@ -79,13 +84,7 @@ const PetLists = ({ navigation }) => {
       </View>
     );
   }
-  // if (deleteLoading) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <Text>삭제 중...</Text>
-  //     </View>
-  //   );
-  // }
+
 
   if (loadError) {
     return (
@@ -112,7 +111,7 @@ const PetLists = ({ navigation }) => {
   } 
   return (
     <>
-      <Header title="반려견 목록" />
+      <Header title="등록 동물 정보" />
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.scrollView}>
           <View style={styles.petList}>
@@ -127,8 +126,9 @@ const PetLists = ({ navigation }) => {
               >
                 <View style={styles.petInfo}>
                   <View style={styles.nameContainer}>
-                    <Text style={styles.petName}>{pet.name}</Text>
-                    {/* <Text style={styles.petBreed}>{pet.breed}</Text> */}
+                    <View style={styles.name_box}><Image source={pet.gender ? require("../assets/images/gender_male.jpg") : require("../assets/images/gender_female.jpg")}  style={styles.gender_icon}/>
+                    <Text style={styles.petName}>{pet.name}</Text></View>
+                  
                     <View style={styles.btn_box}>
                       <TouchableOpacity 
                         style={styles.btn}
@@ -153,16 +153,27 @@ const PetLists = ({ navigation }) => {
                         생년월일: {pet.birth}
                       </Text>
                     </View>
-                    <View style={styles.gender_breed_box}>
-                      <Image source={pet.gender ? require("../assets/images/gender_male.png") : require("../assets/images/gender_female.png")} style={styles.gender_icon} />
-                      <Text style={styles.breed_text}>{pet.breed}</Text>
-                    </View>
+                    {/* <Text style={styles.breed_text}>{pet.breed}</Text> */}
+                    <Text style={styles.breed_text}>진단명 : {pet.disease}</Text>
+                    <Text style={styles.breed_text}>입원일자 : {pet.admission}</Text>
+
                   </View>
                   {expandedPetId === pet.pet_code && (
                     <View style={styles.diseasesContainer}>
-                      <Text style={styles.isNeuteredText}>중성화 여부 : {pet.neutered ? '완료' : '미완료'}</Text>
-                      <Text style={styles.diseasesTitle}>앓고 있는 질병</Text>
-                      <Text style={styles.diseasesText}>{pet.disease}</Text>
+                      <View style={styles.diseases_box}>
+                        <Text style={styles.diseasesText}>종 : {pet.species}</Text>
+                      </View>
+                      <Text style={styles.diseasesText}>품종 : {pet.breed}</Text>
+                      <Text style={styles.diseasesText}>체중 : {pet.weight}kg</Text>
+                      <View style={styles.diseases_box}>
+                        <Text style={styles.diseasesText}>중성화 여부 : {pet.neutered ? 'O' : 'X'}</Text>
+                      </View>
+                      <View style={styles.diseases_box}>
+                        <Text style={styles.diseasesText}>주치의 : {pet.vet}</Text>
+                      </View>
+                      <View style={styles.diseases_box}>
+                        <Text style={styles.diseasesText}>과거병력 : {pet.history}</Text>
+                      </View>
                     </View>
                   )}
                   <TouchableOpacity
@@ -170,27 +181,45 @@ const PetLists = ({ navigation }) => {
                     onPress={() => toggleExpand(pet.pet_code)}
                   >
                     <Text style={styles.moreButtonText}>
-                      {expandedPetId === pet.pet_code ? '접기' : '상세보기'}
+                      {expandedPetId === pet.pet_code ? '접기' : '상세정보'}
                     </Text>
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
-            ))}
+            ))}  
+            <TouchableOpacity
+            style={[
+              styles.petCard,
+            ]}
+            onPress={() => navigation.navigate('RegisterPet')}
+          >
+            <View style={[styles.petInfo, styles.add_btn_box]}>
+              <Text style={styles.add_pet_text}></Text>
+              <Image source={require('../assets/images/plus_round_btn.png')} style={styles.add_pet_icon} />
+              <Text style={styles.add_pet_text}>동물 추가하기</Text>
+            </View>
+          </TouchableOpacity>
           </View>
         </ScrollView>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={selectedPetId ? handleConnectBle : () => navigation.navigate('RegisterPet')}
+          onPress={() => {
+            if (selectedPetId) {
+              handleConnectBle(pets.find((pet) => pet.pet_code === selectedPetId));
+            } else {
+              setOpenAlertModal(true);
+            }
+          }}
         >
           <Text style={styles.addButtonText}>
-            {selectedPetId ? '모니터링 보기' : '반려동물 등록하기'}
+            모니터링 보기
           </Text>
         </TouchableOpacity>
       </SafeAreaView>
       <ConfirmModal
         visible={openConfirmModal}
-        title="삭제 확인"
-        content="정말로 삭제하시겠습니까?"
+        title="동물 삭제 확인"
+        content="등록된 동물의 정보를 삭제하시겠습니까?"
         confirmText="삭제"
         cancelText="취소"
         onConfirm={handleDelete}
@@ -198,9 +227,15 @@ const PetLists = ({ navigation }) => {
       />
       <MessageModal
         visible={openMessageModal}
-        title="삭제 완료"
-        content="펫이 삭제되었습니다."
+        title="동물 삭제 완료"
+        content="등록된 동물의 정보가 삭제되었습니다."
         onClose={() => setOpenMessageModal(false)}
+      />
+      <AlertModal
+        visible={openAlertModal}
+        title={"알림"}
+        content={"동물을 선택하세요"}
+        onClose={() => setOpenAlertModal(false)}
       />
     </>
   );
@@ -218,6 +253,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   petCard: {
+    height: 'auto',
+    minHeight: 130,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 10,
@@ -264,19 +301,23 @@ const styles = StyleSheet.create({
   },
   diseasesContainer: {
     marginTop: 6,
-    padding: 10,
-    backgroundColor: '#FFF5F2',
     borderRadius: 8,
+    gap: 4,
   },
   isNeuteredText: {
     fontSize: 12,
     color: '#666666',
     marginBottom: 4,
   },
+  diseases_box: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   diseasesTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F0663F',
     marginBottom: 4,
   },
   diseasesText: {
@@ -332,6 +373,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  name_box: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   gender_breed_box :{
     width: '100%',
     height: 16,
@@ -347,8 +394,24 @@ const styles = StyleSheet.create({
   },
   breed_text : {
     width: 'auto',
-    height: 16,
+    height: 20,
     fontSize: 14,
+    color: '#666666',
+    margin: 0,
+  },
+  add_btn_box : {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  add_pet_icon : { 
+    width: 60,
+    height: 60,
+  },
+  add_pet_text : {
+    height: 20,
+    fontSize: 16,
     color: '#666666',
     margin: 0,
   }

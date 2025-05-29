@@ -73,7 +73,7 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
               <View style={styles.listInfo}>
                 <Text style={styles.listDate}>수집 시작 일시 : {dayjs(dates[index]).format('YYYY-MM-DD')} {formattedTimes[index]}</Text>
                 <TouchableOpacity style={styles.downloadButton} onPress={() => handleDownload(list)}>
-                  <Text>다운로드</Text>
+                  <Image source={require("../assets/images/download_btn.png")} style={styles.download_btn}/>
                 </TouchableOpacity>
               </View>
             </View>
@@ -145,10 +145,10 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
   },
-  downloadIcon: {
+  download_btn: {
     width: 24,
     height: 24,
-    marginLeft: 12,
+    // marginLeft: 12,
   },
 });
 

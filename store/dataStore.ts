@@ -58,7 +58,6 @@ export const dataStore = create<DataStore>((set, get) => ({
       set({createLoading: true, createError: null});
       const response = await axios.post(`${API_URL}/data/create`, {date, time, pet_code, device_code});
       if(response.status === 200){
-        
         set({createLoading: false, createError: null});
       } else {
         set({createError: 'CSV 생성에 실패했습니다.', createLoading: false});
@@ -73,7 +72,6 @@ export const dataStore = create<DataStore>((set, get) => ({
     deviceCode: string;
     petCode: string;
   }) => {
-    
     try {
       const response = await axios.post(`${API_URL}/data/send`, { 
         data, 
@@ -87,16 +85,6 @@ export const dataStore = create<DataStore>((set, get) => ({
       }
     } catch (error) {
       console.error('데이터 전송 에러:', error);
-      console.error('데이터 전송 에러:', JSON.stringify(error, null, 2));
-      if (axios.isAxiosError(error)) {
-        console.error('Axios Error Message:', error.message);
-        console.error('Response:', error.response);
-        console.error('Request:', error.request);
-        console.error('Config:', error.config);
-      } else {
-        console.error('Unknown Error:', error);
-      }
-
       set({ createError: error instanceof Error ? error.message : '데이터 전송에 실패했습니다.' });
     }
   },
@@ -129,6 +117,8 @@ export const dataStore = create<DataStore>((set, get) => ({
   },
   downCSV: async(file_name: string, label: string) => {
     try {
+      console.log("label :", label)
+      console.log("file_name :", file_name)
       set({downCsvLoading: true, downCsvError: null, downCsvSuccess: false});
       const date_time = file_name.split("_")[2].replace(/\.csv$/i, "");
       const extIndex = file_name.lastIndexOf(".");

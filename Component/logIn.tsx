@@ -9,19 +9,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Dimensions,
-  useWindowDimensions
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import MessageModal from './modal/messageModal';
 import AlertModal from './modal/alertModal';
 import { deviceStore } from '../store/deviceStore';
 import Orientation from 'react-native-orientation-locker';
 import TermsModal from './modal/termsModal';
+import { getToken } from '../utils/storage';
 
 type RootStackParamList = {
   Login: undefined;
-  SignUp: undefined;
+  SignUp: {
+    agreementInfo: {
+      marketingAgreed: boolean;
+      smsAgreed: boolean;
+      emailAgreed: boolean;
+      pushAgreed: boolean;
+    };
+  };
   Dashboard: undefined;
   RegisterPet: undefined;
   PetLists: undefined;
@@ -60,22 +67,26 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     offLoginError
   } = deviceStore();
 
-  // useEffect(() => {
-  //   const checkToken = async () => {
-  //     const token = await getToken();
-  //     if (token && token.device_code) {
-  //       setModalContent({
-  //         title: "로그인 정보 확인",
-  //         content: "로그인 정보가 남아있어 목록 페이지로 이동합니다."
-  //       });
-  //       setOpenMessageModal(true);
-  //       setTimeout(() => {
-  //         navigation.navigate('PetLists');
-  //       }, 1500);
-  //     }
-  //   };
-  //   checkToken();
-  // }, []);
+  // useFocusEffect로 변경
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkToken = async () => {
+        const token = await getToken();
+        
+        if (token && token.device_code) {
+          setModalContent({
+            title: "로그인 정보 확인",
+            content: "로그아웃 후 로그인이 가능합니다."
+          });
+          setOpenMessageModal(true);
+          setTimeout(() => {
+            navigation.navigate('PetLists');
+          }, 1500);
+        }
+      };
+      checkToken();
+    }, [])
+  );
 
   useEffect(() => {
     if (loginSuccess) {
@@ -94,23 +105,13 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   useEffect(() => {
     if (loginError) {
       setModalContent({
-        title: "로그인 실패",
+        title: "안내",
         content: loginError
       });
       setOpenAlertModal(true);
       offLoginError();
     }
   }, [loginError]);
-
-  // const { width, height } = useWindowDimensions();
-  // useEffect(() => {
-  //   if (width > height) {
-  //     Dimensions.set({
-  //       width: height,
-  //       height: width
-  //     });
-  //   }
-  // }, [width, height]);
 
   useEffect(() => {
     Orientation.lockToPortrait();
@@ -120,7 +121,6 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     };
   }, []);
 
-  // 유효성 검사
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -153,9 +153,16 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     setOpenTermsModal(true);
   };
   
-  const handleTermsAgree = () => {
+  const handleTermsAgree = (agreementInfo: {
+    marketingAgreed: boolean;
+    smsAgreed: boolean;
+    emailAgreed: boolean;
+    pushAgreed: boolean;
+  }) => {
     setOpenTermsModal(false);
-    navigation.navigate('SignUp');
+    navigation.navigate('SignUp', {
+      agreementInfo
+    });
   };
 
   return (

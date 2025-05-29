@@ -9,12 +9,42 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SelectDropdown from 'react-native-select-dropdown';
 import { userStore } from '../store/userStore';
-import type { Pet } from '../store/userStore';
 import Header from './header';
 import RecordLists from './recordLists';  
 import { dataStore } from '../store/dataStore';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+  Record: undefined;
+  Dashboard: {
+    selectedPet: {
+      name: string;
+      gender: boolean;
+      birth: string;
+      breed: string;
+      isNeutered: boolean;
+      disease: string;
+    };
+  };
+  ConnectBle: {
+    selectedPet: {
+      device_code: string;
+      pet_code: string;
+      name: string;
+      gender: boolean;
+      birth: string;
+      breed: string;
+      isNeutered: boolean;
+      disease: string;
+    };
+  };
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Record = () => {
+  const navigation = useNavigation<NavigationProp>();
   const { pets, fetchPets } = userStore();    
   const [selectedPet, setSelectedPet] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());

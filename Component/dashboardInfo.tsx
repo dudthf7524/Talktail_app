@@ -31,8 +31,8 @@ const DashboardInfo = ({screen, pet}: DashboardInfoProps) => {
               <Image 
                 source={
                   pet.gender 
-                    ? require("../assets/images/gender_male.png")
-                    : require("../assets/images/gender_female.png")
+                    ? require("../assets/images/gender_male.jpg")
+                    : require("../assets/images/gender_female.jpg")
                 } 
                 style={styles.icon_gender}
               />
@@ -52,8 +52,8 @@ const DashboardInfo = ({screen, pet}: DashboardInfoProps) => {
               <Image 
                 source={
                   pet.gender
-                    ? require("../assets/images/gender_male.png")
-                    : require("../assets/images/gender_female.png")
+                    ? require("../assets/images/gender_male.jpg")
+                    : require("../assets/images/gender_female.jpg")
                 } 
                 style={[styles.icon_gender, styles.icon_gender_land]}
               />

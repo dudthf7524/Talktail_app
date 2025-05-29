@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Image, Modal, TouchableWithoutFeedback, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, Modal, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { orgStore } from '../store/orgStore';
 import AlertModal from './modal/alertModal';
@@ -17,20 +17,23 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
 
-  useEffect(() => {
-    if (logoutSuccess) {
-      setMenuVisible(false);
-      setModalContent({
-        title: "로그아웃",
-        content: "정상적으로 로그아웃 되었습니다."
-      });
-      setOpenMessageModal(true);
-      offLogoutSuccess();
-      setTimeout(() => {
-        navigation.navigate('Login');
-      }, 1500);
-    }
-  }, [logoutSuccess]);
+  const state = navigation.getState();
+  const currentRoute = state.routes[state.index];
+  const previousRoute = state.routes[state.index - 1];
+  // useEffect(() => {
+  //   if (logoutSuccess) {
+  //     setMenuVisible(false);
+  //     setModalContent({
+  //       title: "로그아웃",
+  //       content: "정상적으로 로그아웃 되었습니다."
+  //     });
+  //     setOpenMessageModal(true);
+  //     offLogoutSuccess();
+  //     setTimeout(() => {
+  //       navigation.navigate('Login');
+  //     }, 1500);
+  //   }
+  // }, [logoutSuccess]);
 
   useEffect(() => {
     if (logoutError) {
@@ -44,76 +47,76 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
     }
   }, [logoutError]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  const state = navigation.getState();
-  const previousRoute = state.routes[state.index - 1];
+  // const handleLogout = async() => {
+  //   try {
+  //     await logout();
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
+ 
 
   return (
-    <SafeAreaView>
-      <View style={styles.header}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.backButton,
-            pressed && styles.pressedButton
-          ]}
-          onPress={() => {
-            if (previousRoute.name === "Login") {
-              setModalContent({
-                title: "오류",
-                content: "로그인 화면으로 가고자 한다면 로그아웃을 해주세요."
-              });
-              setOpenAlertModal(true);
-            } else {
-              navigation.goBack()
-            }
-          }}
-        >
-          <Image
-            source={require('../assets/images/arrow_left.png')}
-            style={styles.backButtonImage}
-          />
-        </Pressable>
-        <Text style={styles.title}>{title}</Text>
-        <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
-          <Text style={styles.right_btn_text}>⋮</Text>
-        </Pressable>
-        {/* 메뉴바 모달 */}
-        <Modal
-          visible={menuVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setMenuVisible(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
-            <View style={styles.modalOverlay} />
-          </TouchableWithoutFeedback>
-          <View style={styles.menuBarContainer}>
-            <Pressable style={styles.menuBar} onPress={handleLogout}>
-              <Text style={styles.menuText}>로그아웃</Text>
-            </Pressable>
-          </View>
-        </Modal>
-        <AlertModal
-          visible={openAlertModal}
-          onClose={() => setOpenAlertModal(false)}
-          title={modalContent.title}
-          content={modalContent.content}
+    <View style={styles.header}>
+      <Pressable 
+        style={({ pressed }) => [
+          styles.backButton,
+          pressed && styles.pressedButton
+        ]}
+        onPress={() => {
+
+          if (previousRoute?.name === 'Login') {
+            setModalContent({
+              title: "안내",
+              content: "마지막 페이지입니다."
+            });
+            setOpenAlertModal(true);
+            return;
+          }
+
+          navigation.goBack();
+        }}
+      >
+        <Image 
+          source={require('../assets/images/arrow_left.png')}
+          style={styles.backButtonImage}
         />
-        <MessageModal
-          visible={openMessageModal}
-          onClose={() => setOpenMessageModal(false)}
-          title={modalContent.title}
-          content={modalContent.content}
-        />
+      </Pressable>
+      <Text style={styles.title}>{title}</Text> 
+      {/* <Text>{currentRoute.name}</Text> 
+      <Text>{previousRoute.name}</Text>  */}
+      {/* <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
+        <Text style={styles.right_btn_text}>⋮</Text>
+      </Pressable> */}
+      {/* 메뉴바 모달 */}
+      {/* <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+          <View style={styles.modalOverlay} />
+        </TouchableWithoutFeedback>
+        <View style={styles.menuBarContainer}>
+          <Pressable style={styles.menuBar} onPress={handleLogout}>
+            <Text style={styles.menuText}>로그아웃</Text>
+          </Pressable>
+        </View>
+      </Modal> */}
+      <AlertModal
+        visible={openAlertModal}
+        onClose={() => setOpenAlertModal(false)}
+        title={modalContent.title}
+        content={modalContent.content}
+      />
+      <MessageModal
+        visible={openMessageModal}
+        onClose={() => setOpenMessageModal(false)}
+        title={modalContent.title}
+        content={modalContent.content}
+      />
       </View>
-    </SafeAreaView>
   );
 };
 
@@ -132,6 +135,9 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 8,
     padding: 8,
+    position: 'absolute',
+    left: 16,
+    zIndex: 1,
   },
   pressedButton: {
     opacity: 0.7,
@@ -144,8 +150,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '400',
     color: '#FFF',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
   },
-  right_btn_text: {
+  right_btn_text : {
     fontSize: 40,
     fontWeight: '400',
     color: '#fff',

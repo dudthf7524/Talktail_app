@@ -18,7 +18,14 @@ import { deviceStore } from '../store/deviceStore';
 
 type RootStackParamList = {
   Login: undefined;
-  Sign: undefined;
+  Sign: {
+    agreementInfo: {
+      marketingAgreed: boolean;
+      smsAgreed: boolean;
+      emailAgreed: boolean;
+      pushAgreed: boolean;
+    };
+  };
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -32,13 +39,18 @@ type FormData = {
   confirmPassword: string;
   org_phone: string;
   org_email: string;
+  marketingAgreed: boolean;
+  smsAgreed: boolean;
+  emailAgreed: boolean;
+  pushAgreed: boolean;
 };
 
 type FormErrors = {
   [key in keyof FormData]?: string;
 };
 
-const SignUp = () => {
+const SignUp = ({ route }) => {
+  const { agreementInfo } = route.params;
   const [formData, setFormData] = useState<FormData>({
     deviceCode: '',
     org_name: '',
@@ -48,6 +60,10 @@ const SignUp = () => {
     confirmPassword: '',
     org_phone: '',
     org_email: '',
+    marketingAgreed: agreementInfo.marketingAgreed,
+    smsAgreed: agreementInfo.smsAgreed,
+    emailAgreed: agreementInfo.emailAgreed,
+    pushAgreed: agreementInfo.pushAgreed,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -178,7 +194,7 @@ const SignUp = () => {
     }
 
     if (!formData.org_name) {
-      newErrors.org_name = '기관 이름을 입력해주세요.';
+      newErrors.org_name = '기관명을 입력해주세요.';
     }
 
     if (!formData.org_address) {
@@ -227,7 +243,19 @@ const SignUp = () => {
     }
 
     try {
-      await signup(formData);
+      await signup({
+        deviceCode: formData.deviceCode,
+        org_name: formData.org_name,
+        org_address: formData.org_address,
+        org_id: formData.org_id,
+        org_pw: formData.org_pw,
+        org_phone: formData.org_phone,
+        org_email: formData.org_email,
+        marketingAgreed: formData.marketingAgreed,
+        smsAgreed: formData.smsAgreed,
+        emailAgreed: formData.emailAgreed,
+        pushAgreed: formData.pushAgreed
+      });
     } catch (error) {
       console.log("Error signup", error);
     }
@@ -269,7 +297,7 @@ const SignUp = () => {
               </View>
                {!checkSuccess && <Text style={{color : '#F0663F', marginBottom : 12, fontWeight:'bold'}}>코드 확인이 완료되면 아래 입력칸이 활성화됩니다.</Text>} 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>기관 이름</Text>
+                <Text style={styles.label}>기관명</Text>
                 <TextInput
                   style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.org_name}

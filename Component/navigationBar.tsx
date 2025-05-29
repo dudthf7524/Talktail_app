@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { View, Pressable, Text, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
   Dashboard: undefined;
   ConnectBle: undefined;
-  PetList: undefined;
+  PetLists: undefined;
+  Record: undefined;
+  Mypage: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -18,21 +20,24 @@ const NavigationBar: React.FC = () => {
     <View style={styles.container}>
       <Pressable 
         style={styles.button}
-        onPress={() => navigation.push('PetLists')}
+        onPress={() => navigation.navigate('PetLists')}
       >
-        <Text style={styles.buttonText}>반려동물목록</Text>
+        {/* <Text style={styles.buttonText}>반려동물목록</Text> */}
+        <Image source={require("../assets/images/nav_icon1.png")} style={styles.icon_img} />
       </Pressable>
       <Pressable 
         style={styles.button}
-        onPress={() => navigation.push('Record')}
+        onPress={() => navigation.navigate('Record')}
       >
-        <Text style={styles.buttonText}>데이터목록</Text>
+        {/* <Text style={styles.buttonText}>데이터목록</Text> */}
+        <Image source={require("../assets/images/nav_icon2.png")} style={styles.icon_img} />
       </Pressable>
       <Pressable 
         style={styles.button}
-        onPress={() => navigation.push('Mypage')}
+        onPress={() => navigation.navigate('Mypage')}
       >
-        <Text style={styles.buttonText}>마이페이지</Text>
+        {/* <Text style={styles.buttonText}>마이페이지</Text> */}
+        <Image source={require("../assets/images/nav_icon3.png")} style={styles.icon_img} />
       </Pressable>
      
       {/* <Pressable 
@@ -74,6 +79,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+  icon_img: {
+    width: 40,
+    height: 40,
+  }
 });
 
 export default NavigationBar; 

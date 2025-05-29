@@ -9,10 +9,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image
 } from 'react-native';
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import SelectDropdown from 'react-native-select-dropdown';
 import { userStore } from '../store/userStore';
 import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
@@ -36,6 +36,11 @@ type PetData = {
   gender: boolean;
   neutered: boolean;
   disease: string;
+  weight: string;
+  vet: string;
+  history: string;
+  species: string;
+  admission: Date;
 };
 
 const EditPet = () => {
@@ -58,8 +63,14 @@ const EditPet = () => {
     gender: pet.gender,
     neutered: pet.neutered,
     disease: pet.disease || '',
+    weight: pet.weight || '',
+    vet: pet.vet || '',
+    history: pet.history || '',
+    species: pet.species || '',
+    admission: pet.admission ? new Date(pet.admission) : new Date(),
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerType, setDatePickerType] = useState<'birth' | 'admission'>('birth');
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
@@ -68,8 +79,8 @@ const EditPet = () => {
     if (updateSuccess) {
       setOpenConfirmModal(false);
       setModalContent({
-        title: "펫 정보 수정",
-        content: "펫 정보가 수정되었습니다."
+        title: "동물 수정 완료",
+        content: "등록된 동물의 정보가 수정되었습니다."
       });
       setOpenMessageModal(true);
       offUpdateSuccess();
@@ -94,7 +105,11 @@ const EditPet = () => {
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      setFormData(prev => ({ ...prev, birth: selectedDate }));
+      if (datePickerType === 'birth') {
+        setFormData(prev => ({ ...prev, birth: selectedDate }));
+      } else {
+        setFormData(prev => ({ ...prev, admission: selectedDate }));
+      }
     }
   };
 
@@ -136,6 +151,9 @@ const EditPet = () => {
         birth: formData.birth.getFullYear().toString() + '-' +
                (formData.birth.getMonth() + 1).toString().padStart(2, '0') + '-' +
                formData.birth.getDate().toString().padStart(2, '0'),
+        admission: formData.admission.getFullYear().toString() + '-' +
+                  (formData.admission.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                  formData.admission.getDate().toString().padStart(2, '0'),
         device_code,
         pet_code: pet.pet_code
       };
@@ -162,28 +180,30 @@ const EditPet = () => {
           <ScrollView style={styles.scrollView}>
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>반려동물 이름</Text>
+                <Text style={styles.label}>환자명</Text>
                 <TextInput
                   style={styles.input}
                   value={formData.name}
                   onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-                  placeholder="반려동물 이름을 입력하세요"
+                  placeholder="환자명을 입력하세요"
                   placeholderTextColor="#999999"
                 />
               </View>
 
-              {/* 생년월일 */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>생년월일</Text>
                 <TouchableOpacity
                   style={styles.dateButton}
-                  onPress={() => setShowDatePicker(true)}
+                  onPress={() => {
+                    setDatePickerType('birth');
+                    setShowDatePicker(true);
+                  }}
                 >
                   <Text style={styles.dateButtonText}>
                     {formatDate(formData.birth)}
                   </Text>
                 </TouchableOpacity>
-                {showDatePicker && (
+                {showDatePicker && datePickerType === 'birth' && (
                   <DateTimePicker
                     value={formData.birth}
                     mode="date"
@@ -194,7 +214,28 @@ const EditPet = () => {
                 )}
               </View>
 
-              {/* 견종 */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>체중</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.weight}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, weight: text }))}
+                  placeholder="체중을 입력하세요"
+                  placeholderTextColor="#999999"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>종</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.species}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, species: text }))}
+                  placeholder="종을 입력하세요(ex : 개, 고양이)"
+                  placeholderTextColor="#999999"
+                />
+              </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>품종</Text>
                 <TextInput
@@ -206,7 +247,6 @@ const EditPet = () => {
                 />
               </View>
 
-              {/* 성별 */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>성별</Text>
                 <View style={styles.radioGroup}>
@@ -217,11 +257,8 @@ const EditPet = () => {
                     ]}
                     onPress={() => setFormData(prev => ({ ...prev, gender: true }))}
                   >
-                    <Text style={[
-                      styles.radioButtonText,
-                      formData.gender && styles.radioButtonTextSelected,
-                    ]}>수컷</Text>
-                  </TouchableOpacity>
+                    {formData.gender ? <Image source={require("../assets/images/gender_white_male.png")} style={styles.gender_icon}/> : <Image source={require("../assets/images/gender_black_male.png")} style={styles.gender_icon}/>}
+                    </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
@@ -229,15 +266,11 @@ const EditPet = () => {
                     ]}
                     onPress={() => setFormData(prev => ({ ...prev, gender: false }))}
                   >
-                    <Text style={[
-                      styles.radioButtonText,
-                      !formData.gender && styles.radioButtonTextSelected,
-                    ]}>암컷</Text>
-                  </TouchableOpacity>
+                    {!formData.gender ? <Image source={require("../assets/images/gender_white_female.png")} style={styles.gender_icon}/> : <Image source={require("../assets/images/gender_black_female.png")} style={styles.gender_icon}/>}
+                    </TouchableOpacity>
                 </View>
               </View>
 
-              {/* 중성화 여부 */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>중성화 여부</Text>
                 <View style={styles.radioGroup}>
@@ -251,7 +284,7 @@ const EditPet = () => {
                     <Text style={[
                       styles.radioButtonText,
                       formData.neutered && styles.radioButtonTextSelected,
-                    ]}>예</Text>
+                    ]}>O</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
@@ -263,18 +296,67 @@ const EditPet = () => {
                     <Text style={[
                       styles.radioButtonText,
                       !formData.neutered && styles.radioButtonTextSelected,
-                    ]}>아니오</Text>
+                    ]}>X</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>병명</Text>
+                <Text style={styles.label}>입원일</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => {
+                    setDatePickerType('admission');
+                    setShowDatePicker(true);
+                  }}
+                >
+                  <Text style={styles.dateButtonText}>
+                    {formatDate(formData.admission)}
+                  </Text>
+                </TouchableOpacity>
+                {showDatePicker && datePickerType === 'admission' && (
+                  <DateTimePicker
+                    value={formData.admission}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                    maximumDate={new Date()}
+                  />
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>주치의</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.vet}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, vet: text }))}
+                  placeholder="주치의를 입력하세요"
+                  placeholderTextColor="#999999"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>진단명</Text>
                 <TextInput
                   style={styles.textArea}
                   value={formData.disease}
                   onChangeText={(text) => setFormData(prev => ({ ...prev, disease: text }))}
-                  placeholder="병명을 입력하세요"
+                  placeholder="진단명을 입력하세요"
+                  placeholderTextColor="#999999"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>과거병력</Text>
+                <TextInput
+                  style={styles.textArea}
+                  value={formData.history}
+                  onChangeText={(text) => setFormData(prev => ({ ...prev, history: text }))}
+                  placeholder="과거병력을 입력하세요"
                   placeholderTextColor="#999999"
                   multiline
                   numberOfLines={4}
@@ -303,8 +385,8 @@ const EditPet = () => {
       />
       <ConfirmModal
         visible={openConfirmModal}
-        title="펫 정보 수정"
-        content="펫 정보를 수정하시겠습니까?"
+        title="동물 정보 수정"
+        content="등록된 동물의 정보를 수정하시겠습니까?"
         confirmText="수정"
         cancelText="취소"
         onCancel={() => setOpenConfirmModal(false)}
@@ -402,6 +484,10 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+  },
+  gender_icon: {
+    width: 20,
+    height: 20,
   },
   radioButtonSelected: {
     borderColor: '#F0663F',

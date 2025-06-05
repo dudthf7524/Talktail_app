@@ -17,6 +17,7 @@ import NavigationBar from './navigationBar';
 import DashboardInfo from './dashboardInfo';
 import DashboardChart from './dashboardChart';
 import DashboardData from './dashboardData';
+import { useBLE } from './BLEContext';
 
 type RootStackParamList = {
   Dashboard: {
@@ -81,14 +82,17 @@ declare module 'react-native-ble-manager' {
 
 const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
   const { selectedPet } = route.params;
+  const { state } = useBLE();  // BLEContext 사용
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
   );
-  const [hrData, setHrData] = useState(0);
-  const [spo2Data, setSpo2Data] = useState(0);
-  const [tempData, setTempData] = useState(0);
   const [orientation, setOrientation] = useState('PORTRAIT');
+
+  // BLEContext의 상태를 사용
+  const hrData = state.currentHR;
+  const spo2Data = state.currentSpO2;
+  const tempData = state.currentTemp;
 
   peripherals.get;
 
@@ -152,10 +156,10 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
         'BleManagerDisconnectPeripheral',
         handleDisconnectedPeripheral,
       ),
-      bleManagerEmitter.addListener(
-        'BleManagerDidUpdateValueForCharacteristic',
-        handleUpdateValueForCharacteristic,
-      ),
+      // bleManagerEmitter.addListener(
+      //   'BleManagerDidUpdateValueForCharacteristic',
+      //   handleUpdateValueForCharacteristic,
+      // ),
       bleManagerEmitter.addListener(
         'BleManagerConnectPeripheral',
         peripheral => {
@@ -180,6 +184,14 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
       }
     };
   }, []);
+
+  // const handleUpdateValueForCharacteristic = (data: any) => {
+  //   // const value = data.value;
+  //   // const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+    
+  //   // console.log("Raw decoded data:", decodedValue);  // 원본 데이터 로깅
+    
+  // };
 
   const handleAndroidPermissions = () => {
     if (Platform.OS === 'android' && Platform.Version >= 31) {
@@ -245,7 +257,7 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
       <DashboardData screen={orientation} data={{
         hrData : hrData,
         spo2Data : spo2Data,
-        tempData : tempData,  
+        tempData : tempData?.value || null,  
       }}/>
       {orientation === "PORTRAIT" ? (<View style={styles.portrait_view}><Text style={styles.portrait_text}>가로로 화면을 봐보세요.</Text></View>) : ""}
     </ScrollView>

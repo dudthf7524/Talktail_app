@@ -16,7 +16,6 @@ import type { Pet } from '../store/userStore';
 import ConfirmModal from './modal/confirmModal';
 import MessageModal from './modal/messageModal';
 import AlertModal from './modal/alertModal';
-
 type RootStackParamList = {
   PetLists: undefined;
   RegisterPet: undefined;
@@ -30,6 +29,10 @@ type RootStackParamList = {
       neutered: boolean;
       disease: string;
       history: string;
+      admission: string;
+      species: string;
+      weight: string;
+      vet: string;
     };
   };
   Dashboard: {
@@ -41,15 +44,20 @@ type RootStackParamList = {
       neutered: boolean;
       disease: string;
       history: string;
+      admission: string;
+      species: string;
+      weight: string;
+      vet: string;
     };
   };
   ConnectBle: undefined;
+  Board: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const PetLists = ({ navigation }) => {
-  const { pets, loadLoading, loadError, fetchPets, deletePet, deleteLoading, deleteError } = userStore();
+  const { pets, loadLoading, loadError, fetchPets, deletePet, deleteError } = userStore();
   const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState<boolean>(false);
@@ -84,8 +92,6 @@ const PetLists = ({ navigation }) => {
       </View>
     );
   }
-
-
   if (loadError) {
     return (
       <View style={styles.container}>
@@ -109,6 +115,7 @@ const PetLists = ({ navigation }) => {
       fetchPets();
     }
   } 
+
   return (
     <>
       <Header title="등록 동물 정보" />
@@ -153,7 +160,6 @@ const PetLists = ({ navigation }) => {
                         생년월일: {pet.birth}
                       </Text>
                     </View>
-                    {/* <Text style={styles.breed_text}>{pet.breed}</Text> */}
                     <Text style={styles.breed_text}>진단명 : {pet.disease}</Text>
                     <Text style={styles.breed_text}>입원일자 : {pet.admission}</Text>
 
@@ -187,7 +193,7 @@ const PetLists = ({ navigation }) => {
                 </View>
               </TouchableOpacity>
             ))}  
-            <TouchableOpacity
+          <TouchableOpacity
             style={[
               styles.petCard,
             ]}
@@ -199,6 +205,7 @@ const PetLists = ({ navigation }) => {
               <Text style={styles.add_pet_text}>동물 추가하기</Text>
             </View>
           </TouchableOpacity>
+   
           </View>
         </ScrollView>
         <TouchableOpacity

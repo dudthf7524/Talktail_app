@@ -30,6 +30,9 @@ interface DataStore {
     downCsvLoading: boolean;
     downCsvError: string | null;
     downCsvSuccess: boolean;
+    deleteCsvLoading: boolean;
+    deleteCsvError: string | null;
+    deleteCsvSuccess: boolean;
     createCSV: (date: string, time: string, pet_code: string, device_code: string) => Promise<void>;
     loadData: (date: string, pet_code: string) => Promise<void>;
     sendData: (data: DataPoint[], deviceInfo: {
@@ -39,9 +42,12 @@ interface DataStore {
       petCode: string;
     }) => Promise<void>;
     downCSV: (file_name: string, label: string) => Promise<void>;
+    deleteCSV: (file_name: string) => Promise<void>;
     resetDownCsvSuccess: () => void;
     offDownCsvSuccess: () => void;
     offDownCsvError: () => void;
+    offDeleteCsvSuccess: () => void;
+    offDeleteCsvError: () => void;
 }
 
 export const dataStore = create<DataStore>((set, get) => ({
@@ -53,6 +59,9 @@ export const dataStore = create<DataStore>((set, get) => ({
   downCsvLoading: false,
   downCsvError: null,
   downCsvSuccess: false,
+  deleteCsvLoading: false,
+  deleteCsvError: null,
+  deleteCsvSuccess: false,
   createCSV: async (date: string, time: string, pet_code: string, device_code: string) => {
     try {
       set({createLoading: true, createError: null});
@@ -150,7 +159,23 @@ export const dataStore = create<DataStore>((set, get) => ({
       throw error;
     }
   },
+  deleteCSV: async(file_name: string) => {
+    try {
+      set({deleteCsvLoading: true, deleteCsvError: null, deleteCsvSuccess: false});
+      const response = await axios.post(`${API_URL}/data/deleteCSV`, {filename: file_name});
+      if(response.status === 200){
+        set({deleteCsvLoading: false, deleteCsvError: null, deleteCsvSuccess: true});
+      } else {
+        set({deleteCsvError: 'CSV 삭제에 실패했습니다.', deleteCsvLoading: false});
+      }
+
+    } catch (error) {
+      set({deleteCsvError: error instanceof Error ? error.message : 'CSV 삭제에 실패했습니다.', deleteCsvLoading: false});
+    }
+  },
   resetDownCsvSuccess: () => set({ downCsvSuccess: false }),
   offDownCsvSuccess: () => set({ downCsvSuccess: false }),
-  offDownCsvError: () => set({ downCsvError: null })
+  offDownCsvError: () => set({ downCsvError: null }),
+  offDeleteCsvSuccess: () => set({ deleteCsvSuccess: false }),
+  offDeleteCsvError: () => set({ deleteCsvError: null })
 }))

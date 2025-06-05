@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { dataStore } from '../store/dataStore';
 import AlertModal from './modal/alertModal';
+import ConfirmModal from './modal/confirmModal';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
@@ -18,14 +19,28 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
   const [alertContent, setAlertContent] = useState('');
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState('');
+  const [confirmModalProps, setConfirmModalProps] = useState({
+    title: '',
+    content: '',
+    confirmText: '',
+    onConfirm: () => {},
+  });
   const { 
     csvLists, 
     downCSV, 
     downCsvSuccess, 
     downCsvError,
     offDownCsvSuccess,
-    offDownCsvError 
+    offDownCsvError,
+    deleteCSV,
+    deleteCsvError,
+    deleteCsvSuccess,
+    offDeleteCsvSuccess,
+    offDeleteCsvError,
   } = dataStore();
+
 
   const date_time = csvLists.map((list)=> list.file_name.split("_")[2].split(".")[0].split("-"));
   const dates = date_time.map((list)=> list[0]);
@@ -40,6 +55,35 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
     } catch(e) {
       console.error(e);
     }
+  };
+
+  const handleDelete = async (fileName : string) => {
+    try {
+      await deleteCSV(fileName);
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const showDeleteConfirm = (fileName: string) => {
+    setSelectedFile(fileName);
+    setConfirmModalProps({
+      title: "기록 삭제",
+      content: "정말로 이 기록을 삭제하시겠습니까?",
+      confirmText: "삭제",
+      onConfirm: () => handleDelete(fileName),
+    });
+    setOpenConfirmModal(true);
+  };
+
+  const showDownloadConfirm = (list) => {
+    setConfirmModalProps({
+      title: "다운로드",
+      content: "이 기록을 다운로드 하시겠습니까?",
+      confirmText: "다운로드",
+      onConfirm: () => handleDownload(list),
+    });
+    setOpenConfirmModal(true);
   };
 
   useEffect(() => {
@@ -60,6 +104,27 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
     }
   }, [downCsvError]);
 
+  useEffect(() => {
+    if (deleteCsvSuccess) {
+      setAlertTitle("삭제 완료");
+      setAlertContent("기록이 삭제되었습니다.");
+      setOpenAlertModal(true);
+      setOpenConfirmModal(false);
+      dataStore.getState().loadData(selectedDate, selectedPetCode);
+      offDeleteCsvSuccess();
+    }
+  }, [deleteCsvSuccess]);
+
+  useEffect(() => {
+    if (deleteCsvError) {
+      setAlertTitle("삭제 실패");
+      setAlertContent(deleteCsvError);
+      setOpenAlertModal(true);
+      setOpenConfirmModal(false);
+      offDeleteCsvError();
+    }
+  }, [deleteCsvError]);
+
   return (
     <>
     <ScrollView style={styles.container}>
@@ -72,9 +137,20 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
             >
               <View style={styles.listInfo}>
                 <Text style={styles.listDate}>수집 시작 일시 : {dayjs(dates[index]).format('YYYY-MM-DD')} {formattedTimes[index]}</Text>
-                <TouchableOpacity style={styles.downloadButton} onPress={() => handleDownload(list)}>
-                  <Image source={require("../assets/images/download_btn.png")} style={styles.download_btn}/>
-                </TouchableOpacity>
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity 
+                    style={styles.actionButton} 
+                    onPress={() => showDeleteConfirm(list.file_name)}
+                  >
+                    <Image source={require("../assets/images/btn_delete.png")} style={styles.actionIcon}/>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.actionButton} 
+                    onPress={() => showDownloadConfirm(list)}
+                  >
+                    <Image source={require("../assets/images/download_btn.png")} style={styles.actionIcon}/>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))}
@@ -86,6 +162,18 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
       onClose={() => setOpenAlertModal(false)}
       title={alertTitle}
       content={alertContent}
+    />
+    <ConfirmModal
+      visible={openConfirmModal}
+      onCancel={() => setOpenConfirmModal(false)}
+      onConfirm={() => {
+        setOpenConfirmModal(false);
+        confirmModalProps.onConfirm();
+      }}
+      title={confirmModalProps.title}
+      confirmText={confirmModalProps.confirmText}
+      cancelText="취소"
+      content={confirmModalProps.content}
     />
     </>
   )
@@ -114,7 +202,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
-    height: 70,
+    height: 90,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: {
@@ -128,27 +216,29 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     flex: 1,
-  },
-  listName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
   },
   listDate: {
     fontSize: 14,
     color: '#666',
+    flex: 1,
   },
-  downloadButton: {
-    backgroundColor: '#f0f0f0',
-    padding: 8,
-    borderRadius: 4,
+  buttonGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    marginLeft: 16,
   },
-  download_btn: {
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionIcon: {
     width: 24,
     height: 24,
-    // marginLeft: 12,
   },
 });
 

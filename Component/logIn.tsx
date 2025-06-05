@@ -18,6 +18,8 @@ import { deviceStore } from '../store/deviceStore';
 import Orientation from 'react-native-orientation-locker';
 import TermsModal from './modal/termsModal';
 import { getToken } from '../utils/storage';
+import FindIdModal from './modal/findIdModal';
+import FindPasswordModal from './modal/findPasswordModal';
 
 type RootStackParamList = {
   Login: undefined;
@@ -64,15 +66,23 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     loginSuccess,
     loginError,
     offLoginSuccess,
-    offLoginError
+    offLoginError,
+    findID,
+    offFindIDSuccess,
+    changePasswordSuccess,
+    offFindPasswordSuccess,
+    ofChangePasswordSuccess
+
   } = deviceStore();
+  const [openFindIdModal, setOpenFindIdModal] = useState<boolean>(false);
+  const [openFindPasswordModal, setOpenFindPasswordModal] = useState<boolean>(false);
 
   // useFocusEffect로 변경
   useFocusEffect(
     React.useCallback(() => {
       const checkToken = async () => {
         const token = await getToken();
-        
+
         if (token && token.device_code) {
           setModalContent({
             title: "로그인 정보 확인",
@@ -101,6 +111,20 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       }, 2000);
     }
   }, [loginSuccess]);
+
+  useEffect(() => {
+    if (changePasswordSuccess) {
+      setModalContent({
+        title: "비밀번호 변경 완료",
+        content: "비밀번호 변경이 완료되었습니다."
+      });
+      setOpenMessageModal(true);
+      offFindPasswordSuccess();
+      ofChangePasswordSuccess();
+      setTimeout(() => {
+      }, 2000);
+    }
+  }, [changePasswordSuccess]);
 
   useEffect(() => {
     if (loginError) {
@@ -137,6 +161,7 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   };
 
   const handleSubmit = async () => {
+    
     if (!validateForm()) {
       return;
     }
@@ -152,7 +177,7 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     setTermsType('agreement');
     setOpenTermsModal(true);
   };
-  
+
   const handleTermsAgree = (agreementInfo: {
     marketingAgreed: boolean;
     smsAgreed: boolean;
@@ -164,6 +189,24 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       agreementInfo
     });
   };
+
+  const handleFindId = async (deviceCode: string) => {
+    try {
+      await findID(deviceCode);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleFindIdModalClose = () => {
+    setOpenFindIdModal(false);
+    offFindIDSuccess();
+  };
+
+  const handleFindPasswordModalClose = () => {
+    setOpenFindPasswordModal(false);
+    offFindPasswordSuccess();
+  }
 
   return (
     <>
@@ -226,6 +269,20 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
                 <Text style={styles.signUpButtonText}>회원가입</Text>
               </TouchableOpacity>
 
+              <View style={styles.findAccountContainer}>
+                <TouchableOpacity
+                  onPress={() => setOpenFindIdModal(true)}
+                >
+                  <Text style={styles.findAccountText}>아이디 찾기</Text>
+                </TouchableOpacity>
+                <Text style={styles.findAccountDivider}>|</Text>
+                <TouchableOpacity
+                  onPress={() => setOpenFindPasswordModal(true)}
+                >
+                  <Text style={styles.findAccountText}>비밀번호 찾기</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.termsContainer}>
                 <TouchableOpacity
                   onPress={() => {
@@ -267,6 +324,15 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
         onClose={() => setOpenTermsModal(false)}
         onAgree={handleTermsAgree}
       />
+      <FindIdModal
+        visible={openFindIdModal}
+        onClose={handleFindIdModalClose}
+        onSubmit={handleFindId}
+      />
+      <FindPasswordModal
+        visible={openFindPasswordModal}
+        onClose={handleFindPasswordModalClose}
+      />
     </>
   );
 };
@@ -289,8 +355,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: '80%',
-    height: 100,
+    width: 200,
+    height: 80,
+    resizeMode: 'contain',
     marginBottom: 4
   },
   subtitle: {
@@ -347,6 +414,23 @@ const styles = StyleSheet.create({
     color: '#F0663F',
     fontSize: 18,
     fontWeight: '600',
+  },
+  findAccountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 15,
+  },
+  findAccountText: {
+    color: '#666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  findAccountDivider: {
+    color: '#666',
+    fontSize: 14,
+    marginHorizontal: 10,
   },
   termsContainer: {
     flexDirection: 'row',

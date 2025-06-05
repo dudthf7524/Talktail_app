@@ -4,6 +4,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { orgStore } from '../store/orgStore';
 import AlertModal from './modal/alertModal';
 import MessageModal from './modal/messageModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface HeaderProps {
   title: string;
@@ -54,42 +55,43 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   //     console.error(error);
   //   }
   // }
- 
+
 
   return (
-    <View style={styles.header}>
-      <Pressable 
-        style={({ pressed }) => [
-          styles.backButton,
-          pressed && styles.pressedButton
-        ]}
-        onPress={() => {
+    <SafeAreaView>
+      <View style={styles.header}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.pressedButton
+          ]}
+          onPress={() => {
 
-          if (previousRoute?.name === 'Login') {
-            setModalContent({
-              title: "안내",
-              content: "마지막 페이지입니다."
-            });
-            setOpenAlertModal(true);
-            return;
-          }
+            if (previousRoute?.name === 'Login') {
+              setModalContent({
+                title: "안내",
+                content: "마지막 페이지입니다."
+              });
+              setOpenAlertModal(true);
+              return;
+            }
 
-          navigation.goBack();
-        }}
-      >
-        <Image 
-          source={require('../assets/images/arrow_left.png')}
-          style={styles.backButtonImage}
-        />
-      </Pressable>
-      <Text style={styles.title}>{title}</Text> 
-      {/* <Text>{currentRoute.name}</Text> 
+            navigation.goBack();
+          }}
+        >
+          <Image
+            source={require('../assets/images/arrow_left.png')}
+            style={styles.backButtonImage}
+          />
+        </Pressable>
+        <Text style={styles.title}>{title}</Text>
+        {/* <Text>{currentRoute.name}</Text> 
       <Text>{previousRoute.name}</Text>  */}
-      {/* <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
+        {/* <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
         <Text style={styles.right_btn_text}>⋮</Text>
       </Pressable> */}
-      {/* 메뉴바 모달 */}
-      {/* <Modal
+        {/* 메뉴바 모달 */}
+        {/* <Modal
         visible={menuVisible}
         transparent
         animationType="fade"
@@ -104,19 +106,20 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           </Pressable>
         </View>
       </Modal> */}
-      <AlertModal
-        visible={openAlertModal}
-        onClose={() => setOpenAlertModal(false)}
-        title={modalContent.title}
-        content={modalContent.content}
-      />
-      <MessageModal
-        visible={openMessageModal}
-        onClose={() => setOpenMessageModal(false)}
-        title={modalContent.title}
-        content={modalContent.content}
-      />
+        <AlertModal
+          visible={openAlertModal}
+          onClose={() => setOpenAlertModal(false)}
+          title={modalContent.title}
+          content={modalContent.content}
+        />
+        <MessageModal
+          visible={openMessageModal}
+          onClose={() => setOpenMessageModal(false)}
+          title={modalContent.title}
+          content={modalContent.content}
+        />
       </View>
+    </SafeAreaView>
   );
 };
 
@@ -155,7 +158,7 @@ const styles = StyleSheet.create({
     right: 0,
     textAlign: 'center',
   },
-  right_btn_text : {
+  right_btn_text: {
     fontSize: 40,
     fontWeight: '400',
     color: '#fff',

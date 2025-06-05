@@ -12,6 +12,11 @@ export interface Pet {
   gender: boolean;  
   neutered: boolean;
   disease: string;
+  history: string;
+  admission: string;
+  species: string;
+  weight: string;
+  vet: string;
 }
 
 interface PetFormData {
@@ -21,6 +26,11 @@ interface PetFormData {
   gender: boolean;
   neutered: boolean;
   disease: string;
+  history: string;
+  admission: string;
+  species: string;
+  weight: string;
+  vet: string;
   device_code: string;
 }
 
@@ -171,6 +181,15 @@ export const userStore = create<UserStore>((set, get) => ({
       });
       throw error;
     }
+  },
+
+  confirmPassword: async (password: string) => {
+    const token = await getToken();
+    if (!token) {
+      throw new Error('토큰이 없습니다.');
+    }
+    const response = await axios.post(`${API_URL}/user/confirmPassword`, { token, password });
+    console.log(response.status)
   },
 
   offLoadSuccess: () => {

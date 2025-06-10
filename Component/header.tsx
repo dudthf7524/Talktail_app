@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
 
 
   return (
-    <SafeAreaView>
+    <SafeAreaView  edges={['top',]}>
       <View style={styles.header}>
         <Pressable
           style={({ pressed }) => [

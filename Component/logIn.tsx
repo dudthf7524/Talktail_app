@@ -85,8 +85,8 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
 
         if (token && token.device_code) {
           setModalContent({
-            title: "로그인 정보 확인",
-            content: "로그아웃 후 로그인이 가능합니다."
+            title: "자동 로그인",
+            content: "이전 로그인 기록으로 로그인됩니다."
           });
           setOpenMessageModal(true);
           setTimeout(() => {

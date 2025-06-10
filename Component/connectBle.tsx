@@ -5,10 +5,10 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   Platform,
   PermissionsAndroid,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, RouteProp } from '@react-navigation/native';
 import Header from './header';
 import NavigationBar from './navigationBar';
@@ -410,7 +410,7 @@ const ConnectBle = ({ route }: Props) => {
   return (
     <>
       <Header title="블루투스 연결" />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
         <View style={styles.monitorBox}>
           <ScrollView
             style={styles.deviceList}

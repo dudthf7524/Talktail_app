@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -9,6 +8,8 @@ import {
   Image
 } from 'react-native';
 import Header from './header';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { userStore } from '../store/userStore';
@@ -119,7 +120,7 @@ const PetLists = ({ navigation }) => {
   return (
     <>
       <Header title="등록 동물 정보" />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom']}>>
         <ScrollView style={styles.scrollView}>
           <View style={styles.petList}>
             {pets.map((pet,index) => (

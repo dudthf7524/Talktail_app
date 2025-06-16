@@ -20,6 +20,7 @@ import TermsModal from './modal/termsModal';
 import { getToken } from '../utils/storage';
 import FindIdModal from './modal/findIdModal';
 import FindPasswordModal from './modal/findPasswordModal';
+import messaging from '@react-native-firebase/messaging';
 
 type RootStackParamList = {
   Login: undefined;
@@ -207,6 +208,14 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     setOpenFindPasswordModal(false);
     offFindPasswordSuccess();
   }
+  useEffect(() => {
+  messaging()
+    .getToken()
+    .then(token => {
+      console.log('FCM Token:', token);
+      // 👉 서버에 이 토큰 저장
+    });
+}, []);
 
   return (
     <>

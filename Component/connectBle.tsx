@@ -409,7 +409,7 @@ const ConnectBle = ({ route }: Props) => {
 
   return (
     <>
-      <Header title="블루투스 연결" />
+      <Header title="디바이스 연결" />
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <View style={styles.monitorBox}>
           <ScrollView

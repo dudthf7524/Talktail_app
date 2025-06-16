@@ -85,27 +85,6 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           />
         </Pressable>
         <Text style={styles.title}>{title}</Text>
-        {/* <Text>{currentRoute.name}</Text> 
-      <Text>{previousRoute.name}</Text>  */}
-        {/* <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
-        <Text style={styles.right_btn_text}>⋮</Text>
-      </Pressable> */}
-        {/* 메뉴바 모달 */}
-        {/* <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
-          <View style={styles.modalOverlay} />
-        </TouchableWithoutFeedback>
-        <View style={styles.menuBarContainer}>
-          <Pressable style={styles.menuBar} onPress={handleLogout}>
-            <Text style={styles.menuText}>로그아웃</Text>
-          </Pressable>
-        </View>
-      </Modal> */}
         <AlertModal
           visible={openAlertModal}
           onClose={() => setOpenAlertModal(false)}

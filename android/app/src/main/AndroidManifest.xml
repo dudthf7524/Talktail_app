@@ -20,6 +20,10 @@
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
+
+    <!-- Android 13 이상: 알림 권한 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -40,5 +44,19 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+   <service
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="true" 
+            tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+<service
+    android:name=".MyForegroundService"
+    android:foregroundServiceType="connectedDevice"
+    android:exported="false" />
     </application>
 </manifest>

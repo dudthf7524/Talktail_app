@@ -1,7 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
-
+apply plugin: "com.google.gms.google-services"
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -83,7 +83,7 @@ android {
         applicationId "com.talktail"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
+        versionCode 13
         versionName "1.0"
         
         // Add BLE feature requirement
@@ -131,4 +131,9 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+     // ✅ Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:33.15.0')
+
+    // ✅ Firebase Messaging (Push 알림)
+    implementation 'com.google.firebase:firebase-messaging'
 }

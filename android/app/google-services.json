@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "891516423596",
+    "project_id": "talktail-872bf",
+    "storage_bucket": "talktail-872bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891516423596:android:724eee5d80fe4b85e6fe09",
+        "android_client_info": {
+          "package_name": "com.talktail"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3liE38t2E-Vz7iAkFBV8WxPFoFIOBbA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

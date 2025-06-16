@@ -10,10 +10,12 @@
     "test": "jest"
   },
   "dependencies": {
+    "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "^8.3.0",
-    "@react-native-firebase/app": "^22.2.0",
-    "@react-native-firebase/messaging": "^22.2.0",
+    "@react-native-firebase/analytics": "^22.2.1",
+    "@react-native-firebase/app": "^22.2.1",
+    "@react-native-firebase/messaging": "^22.2.1",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
     "axios": "^1.9.0",
@@ -48,6 +50,7 @@
     "@react-native/typescript-config": "0.79.2",
     "@types/jest": "^29.5.13",
     "@types/react": "^19.0.0",
+    "@types/react-native-push-notification": "^8.1.4",
     "@types/react-test-renderer": "^19.0.0",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",
